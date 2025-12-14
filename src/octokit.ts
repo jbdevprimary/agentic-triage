@@ -94,19 +94,35 @@ export async function executeGraphQL<T = unknown>(
     const client = await getGraphQLMCPClient();
     const tools = await client.tools();
 
-    // mcp-graphql exposes a 'graphql' tool for executing queries
-    const tool = tools['graphql'] || tools['execute'] || tools['query'];
+    // mcp-graphql exposes 'query-graphql' tool for executing queries
+    const tool = tools['query-graphql'] || tools['graphql'] || tools['execute'] || tools['query'];
     if (!tool) {
         throw new Error('GraphQL MCP tool not found. Available tools: ' + Object.keys(tools).join(', '));
     }
 
     if (typeof tool.execute === 'function') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = await (tool.execute as any)({ query, variables });
-        if (result.errors && result.errors.length > 0) {
-            throw new Error(`GraphQL error: ${result.errors.map((e: { message: string }) => e.message).join(', ')}`);
+        // mcp-graphql expects variables as a JSON string, not an object
+        const args: { query: string; variables?: string } = { query };
+        if (variables && Object.keys(variables).length > 0) {
+            args.variables = JSON.stringify(variables);
         }
-        return result.data as T;
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = await (tool.execute as any)(args);
+        
+        // Handle response format from mcp-graphql (may have content array)
+        let data = result;
+        if (result.content && Array.isArray(result.content)) {
+            const textContent = result.content.find((c: { type: string }) => c.type === 'text');
+            if (textContent?.text) {
+                data = JSON.parse(textContent.text);
+            }
+        }
+        
+        if (data.errors && data.errors.length > 0) {
+            throw new Error(`GraphQL error: ${data.errors.map((e: { message: string }) => e.message).join(', ')}`);
+        }
+        return (data.data || data) as T;
     }
 
     throw new Error('GraphQL MCP tool is not executable');
@@ -262,7 +278,10 @@ export async function updateIssue(
 }
 
 /**
- * Search issues via MCP
+ * Search issues via MCP (REST API)
+ * 
+ * Note: This may not work with GitHub App tokens that have limited scopes.
+ * Prefer searchIssuesGraphQL for better compatibility.
  */
 export async function searchIssues(
     query: string
@@ -274,6 +293,13 @@ export async function searchIssues(
         labels: string[];
     }>
 > {
+    // Try GraphQL first (more reliable with GitHub App tokens)
+    try {
+        return await searchIssuesGraphQL(query);
+    } catch {
+        // Fall back to REST API
+    }
+
     const { owner, repo } = getRepoContext();
     const fullQuery = `repo:${owner}/${repo} ${query}`;
 
@@ -293,6 +319,77 @@ export async function searchIssues(
         title: item.title,
         state: item.state,
         labels: item.labels?.map((l) => l.name) || [],
+    }));
+}
+
+/**
+ * Search issues via GraphQL (preferred method)
+ * 
+ * Works reliably with GitHub App tokens that may have limited REST API access.
+ */
+export async function searchIssuesGraphQL(
+    query: string,
+    options: { first?: number; includeBody?: boolean } = {}
+): Promise<
+    Array<{
+        number: number;
+        title: string;
+        state: string;
+        labels: string[];
+        body?: string;
+    }>
+> {
+    const { owner, repo } = getRepoContext();
+    const { first = 100, includeBody = false } = options;
+    
+    // Parse query for state filter
+    const isOpen = query.includes('is:open') || query.includes('state:open');
+    const isClosed = query.includes('is:closed') || query.includes('state:closed');
+    const states = isClosed ? 'CLOSED' : isOpen ? 'OPEN' : null;
+    
+    const statesArg = states ? `, states: ${states}` : '';
+    const bodyField = includeBody ? 'body' : '';
+    
+    const gqlQuery = `
+        query GetIssues($owner: String!, $repo: String!, $first: Int!) {
+            repository(owner: $owner, name: $repo) {
+                issues(first: $first, orderBy: {field: UPDATED_AT, direction: DESC}${statesArg}) {
+                    nodes {
+                        number
+                        title
+                        state
+                        ${bodyField}
+                        labels(first: 10) {
+                            nodes {
+                                name
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    `;
+    
+    const result = await executeGraphQL<{
+        repository: {
+            issues: {
+                nodes: Array<{
+                    number: number;
+                    title: string;
+                    state: string;
+                    body?: string;
+                    labels: { nodes: Array<{ name: string }> };
+                }>;
+            };
+        };
+    }>(gqlQuery, { owner, repo, first });
+    
+    return result.repository.issues.nodes.map((issue) => ({
+        number: issue.number,
+        title: issue.title,
+        state: issue.state.toLowerCase(),
+        labels: issue.labels.nodes.map((l) => l.name),
+        ...(includeBody && { body: issue.body }),
     }));
 }
 

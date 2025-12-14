@@ -18,7 +18,14 @@ import {
 import { analyzeBacklogHealth } from './balance.js';
 import { getRepoContext, searchIssues } from '../octokit.js';
 
-const SYSTEM_PROMPT = `You are a product manager creating a roadmap for Strata, a procedural 3D graphics library for React Three Fiber.
+/**
+ * Get dynamic system prompt based on repository context
+ */
+function getSystemPrompt(): string {
+    const { owner, repo } = getRepoContext();
+    const repoDescription = process.env.REPO_DESCRIPTION || `the ${repo} project`;
+    
+    return `You are a product manager creating a roadmap for ${repoDescription} (${owner}/${repo}).
 
 Analyze the backlog and create a quarterly roadmap that:
 
@@ -43,6 +50,7 @@ Analyze the backlog and create a quarterly roadmap that:
    - Set expectations
 
 Output a structured roadmap with quarters, themes, and key deliverables.`;
+}
 
 export interface RoadmapOptions {
     /** Number of quarters to plan */
@@ -157,7 +165,7 @@ Format as:
 - [Deliverable 1]
 - [Deliverable 2]`;
 
-    const roadmapText = await generate(prompt, { systemPrompt: SYSTEM_PROMPT });
+    const roadmapText = await generate(prompt, { systemPrompt: getSystemPrompt() });
 
     // 4. Parse roadmap
     const roadmapQuarters = parseRoadmapResponse(roadmapText, quarters);

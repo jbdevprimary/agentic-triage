@@ -447,14 +447,17 @@ export async function createGraphQLClient(): Promise<MCPClient> {
         throw new Error('GITHUB_TOKEN or GH_TOKEN required for GraphQL MCP');
     }
 
+    // mcp-graphql v1.0.0+ uses environment variables instead of CLI args
     const transport = new StdioMCPTransport({
         command: 'npx',
-        args: [
-            '-y',
-            'mcp-graphql',
-            '--endpoint', 'https://api.github.com/graphql',
-            '--header', `Authorization: Bearer ${token}`,
-        ],
+        args: ['-y', 'mcp-graphql'],
+        env: {
+            ...process.env,
+            ENDPOINT: 'https://api.github.com/graphql',
+            HEADERS: JSON.stringify({
+                Authorization: `Bearer ${token}`,
+            }),
+        },
     });
 
     return createMCPClient({

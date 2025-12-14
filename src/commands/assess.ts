@@ -1,8 +1,16 @@
 import pc from 'picocolors';
 import { getIssue, addLabels, commentOnIssue } from '../github.js';
 import { generate } from '../ai.js';
+import { getRepoContext } from '../octokit.js';
 
-const SYSTEM_PROMPT = `You are a technical issue triage assistant for Strata, a procedural 3D graphics library for React Three Fiber.
+/**
+ * Get dynamic system prompt based on repository context
+ */
+function getSystemPrompt(): string {
+    const { owner, repo } = getRepoContext();
+    const repoDescription = process.env.REPO_DESCRIPTION || `the ${repo} project`;
+    
+    return `You are a technical issue triage assistant for ${repoDescription} (${owner}/${repo}).
 
 Analyze the GitHub issue and determine:
 1. Type: bug, feature, enhancement, documentation, question
@@ -20,6 +28,7 @@ Keep your response conversational and helpful. Format as:
 Then provide a brief analysis and any recommendations.
 
 If the issue is ready for automated development, end with: <!-- ready-for-aider -->`;
+}
 
 export interface AssessOptions {
     dryRun?: boolean;
@@ -51,7 +60,7 @@ ${issue.body || '(no description provided)'}
         console.log(pc.dim('Analyzing with AI...'));
     }
 
-    const response = await generate(prompt, { systemPrompt: SYSTEM_PROMPT });
+    const response = await generate(prompt, { systemPrompt: getSystemPrompt() });
 
     console.log('\n' + pc.green('Assessment:'));
     console.log(response);

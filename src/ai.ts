@@ -17,9 +17,10 @@ import { z } from 'zod';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ToolSet = Record<string, any>;
 
-// Default model - glm-4.6:cloud on Ollama Cloud has good tool support
-export const DEFAULT_MODEL = 'glm-4.6:cloud';
-export const CLOUD_HOST = 'https://ollama.com';
+// Default model - qwen3-coder:480b on Ollama Cloud has excellent tool support
+// glm-4.6:cloud has issues with tool result synthesis (keeps calling tools without responding)
+export const DEFAULT_MODEL = 'qwen3-coder:480b';
+export const CLOUD_HOST = 'https://ollama.com/api';
 export const LOCAL_HOST = 'http://localhost:11434/api';
 
 export interface AIConfig {
@@ -37,17 +38,23 @@ let _customProvider: ReturnType<typeof createOllama> | null = null;
  */
 export function getProvider(config: AIConfig = {}) {
     const apiKey = config.apiKey || process.env.OLLAMA_API_KEY;
-    const host = config.host || process.env.OLLAMA_HOST;
+    const hostEnv = config.host || process.env.OLLAMA_HOST;
 
     // If no custom config needed, use default provider
-    if (!apiKey && !host) {
+    if (!apiKey && !hostEnv) {
         return ollama;
+    }
+
+    // Normalize host URL - ensure it ends with /api for Ollama endpoints
+    let host = hostEnv || (apiKey ? CLOUD_HOST : LOCAL_HOST);
+    if (host && !host.endsWith('/api')) {
+        host = host.replace(/\/$/, '') + '/api';
     }
 
     // Create custom provider with auth headers for cloud
     if (!_customProvider) {
         _customProvider = createOllama({
-            baseURL: host || (apiKey ? CLOUD_HOST : LOCAL_HOST),
+            baseURL: host,
             headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : undefined,
         });
     }
