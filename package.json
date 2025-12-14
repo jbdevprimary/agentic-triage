@@ -1,0 +1,92 @@
+{
+    "name": "agentic-triage",
+    "version": "0.1.0",
+    "description": "AI-powered GitHub issue triage, PR review, and sprint planning CLI - powered by agentic-control and agentic-crew",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "bin": {
+        "agentic-triage": "./dist/cli.js",
+        "triage": "./dist/cli.js"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./reporters/vitest": {
+            "types": "./dist/reporters/vitest.d.ts",
+            "import": "./dist/reporters/vitest.js"
+        },
+        "./reporters/playwright": {
+            "types": "./dist/reporters/playwright.d.ts",
+            "import": "./dist/reporters/playwright.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "clean": "rimraf dist",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "test:coverage": "vitest run --coverage",
+        "lint": "eslint src --ext .ts",
+        "format": "prettier --write src"
+    },
+    "keywords": [
+        "triage",
+        "ai",
+        "automation",
+        "agentic",
+        "ollama",
+        "anthropic",
+        "vercel-ai-sdk",
+        "mcp",
+        "playwright",
+        "testing",
+        "security",
+        "codeql",
+        "sarif",
+        "github",
+        "octokit",
+        "cli",
+        "sprint-planning",
+        "release-management",
+        "issue-triage",
+        "code-review"
+    ],
+    "author": "Jon Bogaty <jon@jonbogaty.com>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jbdevprimary/agentic-triage.git"
+    },
+    "homepage": "https://github.com/jbdevprimary/agentic-triage#readme",
+    "bugs": {
+        "url": "https://github.com/jbdevprimary/agentic-triage/issues"
+    },
+    "engines": {
+        "node": ">=20"
+    },
+    "dependencies": {
+        "@ai-sdk/mcp": "^1.0.0-beta.33",
+        "@playwright/mcp": "latest",
+        "agentic-control": "^1.1.0",
+        "ai": "^5.0.0",
+        "ai-sdk-ollama": "^1.1.0",
+        "commander": "^14.0.2",
+        "glob": "^13.0.0",
+        "octokit": "^5.0.5",
+        "ollama": "^0.6.3",
+        "picocolors": "^1.1.1",
+        "zod": "^4.1.13"
+    },
+    "devDependencies": {
+        "@types/node": "^22.0.0",
+        "rimraf": "^6.1.2",
+        "tsx": "^4.19.0",
+        "typescript": "^5.3.0",
+        "vitest": "^3.2.4",
+        "@vitest/coverage-v8": "^3.2.4"
+    }
+}
