@@ -141,6 +141,49 @@ export default defineConfig({
 });
 ```
 
+## Development
+
+### Contributing
+
+We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for:
+- Development setup and workflow
+- Code style guidelines
+- Commit conventions
+- Pull request process
+
+### Testing
+
+The project maintains **>81% test coverage** with comprehensive unit and integration tests. See [Testing Guide](./TESTING.md) for:
+- Running tests locally
+- Writing new tests
+- VCR pattern for integration tests
+- Coverage requirements
+
+### Local Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run tests
+pnpm test
+
+# Run tests with coverage
+pnpm run test:coverage
+
+# Format code
+pnpm run format
+
+# Lint code
+pnpm run lint
+
+# Type check
+pnpm run typecheck
+
+# Build
+pnpm run build
+```
+
 ## Related Projects
 
 - [agentic-control](https://github.com/jbdevprimary/agentic-control) - Core AI agent control framework
