@@ -76,9 +76,10 @@ describe('execution/executor - expanded coverage', () => {
 
             // In live mode, wait steps actually execute
             expect(executed.steps[0].result?.status).toBe('success');
-            expect(executed.steps[1].result?.status).toBe('failed');
+            expect(executed.steps[1].result?.status).toBe('failure');
             expect(executed.steps[2].result?.status).toBe('skipped');
-            expect(executed.result?.status).toBe('failure');
+            // Overall result is partial when some steps succeed and some fail
+            expect(executed.result?.status).toBe('partial');
         });
 
         it('stops execution on first error when stopOnError is true', async () => {
