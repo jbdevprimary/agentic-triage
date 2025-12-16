@@ -13,7 +13,7 @@
 
 import { getOrLoadProvider, resolveProviderOptions } from 'agentic-control/core';
 import { generateText, stepCountIs, tool } from 'ai';
-import { createOllama, ollama } from 'ai-sdk-ollama';
+import { createOllama, ollama } from 'ollama-ai-provider';
 import type { z } from 'zod';
 
 // Use a looser type for tools to avoid version incompatibilities between
