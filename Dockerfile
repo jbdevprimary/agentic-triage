@@ -5,7 +5,7 @@
 # =============================================================================
 # Stage 1: Build stage
 # =============================================================================
-FROM node:22-slim AS builder
+FROM node:25-slim AS builder
 
 WORKDIR /build
 
@@ -28,7 +28,7 @@ RUN pnpm run build
 # =============================================================================
 # Stage 2: Production image
 # =============================================================================
-FROM node:22-slim AS production
+FROM node:25-slim AS production
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
