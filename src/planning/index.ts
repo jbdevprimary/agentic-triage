@@ -9,8 +9,8 @@
  * - Cascade: Self-spawning automation
  */
 
-export * from './weights.js';
 export * from './balance.js';
+export { type CascadeConfig, type CascadeResult, type CascadeStep, runCascade } from './cascade.js';
+export { generateRoadmap, type Roadmap, type RoadmapOptions } from './roadmap.js';
 export { planSprint, type SprintOptions, type SprintPlan } from './sprint.js';
-export { generateRoadmap, type RoadmapOptions, type Roadmap } from './roadmap.js';
-export { runCascade, type CascadeConfig, type CascadeResult, type CascadeStep } from './cascade.js';
+export * from './weights.js';

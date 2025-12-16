@@ -15,36 +15,24 @@
  */
 
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 import * as os from 'node:os';
+import * as path from 'node:path';
 import pc from 'picocolors';
+import { type ExecutorOptions, executePlan } from './executor.js';
+import { cleanupFixture, type FixtureRepo, type FixtureScenario, generateFromScenario } from './fixtures.js';
 import {
+    type CopiedIssue,
+    copyIssueToSandbox,
     createProjectSandbox,
     deleteProjectSandbox,
-    copyIssueToSandbox,
     deleteSandboxIssue,
     type SandboxProject,
-    type CopiedIssue,
 } from './github-sandbox.js';
-import {
-    generateFromScenario,
-    cleanupFixture,
-    type FixtureRepo,
-    type FixtureScenario,
-} from './fixtures.js';
-import { createRecorder, type HttpRecorder } from './recorder.js';
-import { createSandbox, type Sandbox } from './sandbox.js';
 import { createMockMCP, type MockMCPProvider, type VerificationResult } from './mock-mcp.js';
-import {
-    planAssess,
-    planDevelop,
-    planReview,
-    planTestGeneration,
-    validatePlan,
-    printPlanSummary,
-} from './planner.js';
-import { executePlan, type ExecutorOptions } from './executor.js';
 import { type ExecutionPlan, serializePlan } from './plan.js';
+import { planAssess, planDevelop, planReview, planTestGeneration, printPlanSummary, validatePlan } from './planner.js';
+import { createRecorder, type HttpRecorder } from './recorder.js';
+import type { Sandbox } from './sandbox.js';
 
 export interface TestHarnessOptions {
     /** Test name for logging and recordings */
@@ -149,9 +137,7 @@ export class TestHarness {
             if (this.options.verbose) {
                 console.log(pc.dim('  Creating issue sandbox...'));
             }
-            this.issueSandbox = await copyIssueToSandbox(
-                this.options.useIssueSandbox.issueNumber
-            );
+            this.issueSandbox = await copyIssueToSandbox(this.options.useIssueSandbox.issueNumber);
         }
 
         // Setup fixture repo
@@ -160,19 +146,13 @@ export class TestHarness {
                 console.log(pc.dim(`  Creating fixture: ${this.options.useFixture.scenario}...`));
             }
             fs.mkdirSync(this.options.fixturesDir!, { recursive: true });
-            this.fixture = await generateFromScenario(
-                this.options.useFixture.scenario,
-                this.options.fixturesDir!
-            );
+            this.fixture = await generateFromScenario(this.options.useFixture.scenario, this.options.fixturesDir!);
             this.mockMCP = createMockMCP(this.fixture);
         }
 
         // Setup HTTP recorder
         if (this.options.recordingMode !== 'passthrough') {
-            this.recorder = createRecorder(
-                this.options.recordingsDir!,
-                this.options.recordingMode!
-            );
+            this.recorder = createRecorder(this.options.recordingsDir!, this.options.recordingMode!);
         }
 
         this.initialized = true;

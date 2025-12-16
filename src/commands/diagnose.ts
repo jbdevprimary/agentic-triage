@@ -7,18 +7,11 @@
  * - Optionally attempts to fix simple failures
  */
 
+import { existsSync, readFileSync } from 'node:fs';
 import pc from 'picocolors';
-import { readFileSync, existsSync } from 'node:fs';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { runAgenticTask, type MCPClient } from '../mcp.js';
-import {
-    parseTestReport,
-    getFailedTests,
-    formatForAI,
-    type TestReport,
-    type TestResult,
-} from '../test-results.js';
-import { commentOnIssue, commentOnPR, addLabels } from '../github.js';
+import { runAgenticTask } from '../mcp.js';
+import { commentOnPR } from '../octokit.js';
+import { formatForAI, getFailedTests, parseTestReport, type TestReport, type TestResult } from '../test-results.js';
 
 const SYSTEM_PROMPT = `You are an expert test failure diagnostician for Strata, a procedural 3D graphics library for React Three Fiber.
 
@@ -80,14 +73,7 @@ export interface DiagnoseOptions {
 }
 
 export async function diagnose(options: DiagnoseOptions): Promise<void> {
-    const {
-        report: reportPath,
-        dryRun = false,
-        verbose = false,
-        pr,
-        autoFix = false,
-        createIssues = false,
-    } = options;
+    const { report: reportPath, dryRun = false, verbose = false, pr, autoFix = false, createIssues = false } = options;
 
     console.log(pc.blue('🔍 Diagnosing test failures...'));
 
@@ -141,15 +127,17 @@ START DIAGNOSIS:`;
             userPrompt: prompt,
             mcpClients: {
                 filesystem: process.cwd(),
-                context7: true,  // Check library docs to verify correct usage
+                context7: true, // Check library docs to verify correct usage
             },
             maxSteps: 20,
-            onToolCall: verbose ? (toolName, args) => {
-                console.log(pc.dim(`  → ${toolName}()`));
-            } : undefined,
+            onToolCall: verbose
+                ? (toolName, _args) => {
+                      console.log(pc.dim(`  → ${toolName}()`));
+                  }
+                : undefined,
         });
 
-        console.log('\n' + pc.green('═══ Diagnosis Report ═══'));
+        console.log(`\n${pc.green('═══ Diagnosis Report ═══')}`);
         console.log(result.text);
 
         if (verbose) {
@@ -170,7 +158,7 @@ ${result.text}
 ---
 _Analyzed by @strata/triage_`;
 
-            commentOnPR(pr, comment);
+            await commentOnPR(pr, comment);
             console.log(pc.dim(`Posted diagnosis to PR #${pr}`));
         }
 
@@ -185,7 +173,6 @@ _Analyzed by @strata/triage_`;
         }
 
         console.log(pc.green('\n✅ Diagnosis complete!'));
-
     } catch (error) {
         console.error(pc.red('\n❌ Diagnosis failed:'));
         if (error instanceof Error) {
@@ -197,9 +184,9 @@ _Analyzed by @strata/triage_`;
 
 async function createIssuesForFailures(
     failures: TestResult[],
-    report: TestReport,
-    diagnosis: string,
-    dryRun: boolean
+    _report: TestReport,
+    _diagnosis: string,
+    _dryRun: boolean
 ): Promise<void> {
     console.log(pc.blue('\nChecking for new issues to create...'));
 
@@ -212,81 +199,58 @@ async function createIssuesForFailures(
         if (!failureGroups.has(key)) {
             failureGroups.set(key, []);
         }
-        failureGroups.get(key)!.push(failure);
+        failureGroups.get(key)?.push(failure);
     }
 
-    for (const [key, group] of failureGroups) {
+    for (const [_key, group] of failureGroups) {
         const firstFailure = group[0];
 
-        // Check if issue already exists
-        const searchQuery = `is:issue is:open "${firstFailure.file}" in:body`;
-        try {
-            const existing = execFileSync('gh', ['issue', 'list', '--search', searchQuery, '--json', 'number', '--limit', '1'], {
-                encoding: 'utf-8',
-            });
-            const parsed = JSON.parse(existing);
-            if (parsed.length > 0) {
-                console.log(pc.dim(`Issue already exists for ${firstFailure.file}`));
-                continue;
-            }
-        } catch {
-            // Continue even if search fails
-        }
+        // NOTE: Creating/searching issues should be performed via GitHub MCP.
+        // This function is intentionally a no-op until the MCP-backed workflow is wired in.
+        console.log(pc.yellow(`[Not implemented] Would check/create issue for ${firstFailure.file}`));
 
-        const title = `[Test Failure] ${firstFailure.name}`;
-        const body = `## Test Failure Report
-
-**File:** \`${firstFailure.file}\`
-**Test:** ${firstFailure.fullName}
-**Runner:** ${report.runner}
-
-### Error
-
-\`\`\`
-${firstFailure.error?.message || 'Unknown error'}
-\`\`\`
-
-${firstFailure.error?.codeFrame ? `### Code Frame\n\`\`\`\n${firstFailure.error.codeFrame}\n\`\`\`` : ''}
-
-### Context
-
-${report.git ? `- **Branch:** ${report.git.branch}\n- **Commit:** ${report.git.commit}` : ''}
-
----
-_Auto-created by @strata/triage_`;
-
-        if (dryRun) {
-            console.log(pc.yellow(`[Dry run] Would create issue: ${title}`));
-        } else {
-            try {
-                spawnSync('gh', ['issue', 'create', '--title', title, '--body', body, '--label', 'bug,test-failure'], {
-                    encoding: 'utf-8',
-                });
-                console.log(pc.green(`Created issue: ${title}`));
-            } catch (err) {
-                console.log(pc.yellow(`Could not create issue: ${title}`));
-            }
-        }
+        // TODO: Enable when MCP-backed workflow is wired in
+        // const title = `[Test Failure] ${firstFailure.name}`;
+        // const body = `## Test Failure Report
+        //
+        // **File:** \`${firstFailure.file}\`
+        // **Test:** ${firstFailure.fullName}
+        // **Runner:** ${report.runner}
+        //
+        // ### Error
+        //
+        // \`\`\`
+        // ${firstFailure.error?.message || 'Unknown error'}
+        // \`\`\`
+        //
+        // ${firstFailure.error?.codeFrame ? `### Code Frame\n\`\`\`\n${firstFailure.error.codeFrame}\n\`\`\`` : ''}
+        //
+        // ### Context
+        //
+        // ${report.git ? `- **Branch:** ${report.git.branch}\n- **Commit:** ${report.git.commit}` : ''}
+        //
+        // ---
+        // _Auto-created by @strata/triage_`;
+        //
+        // if (dryRun) {
+        //     console.log(pc.yellow(`[Dry run] Would create issue: ${title}`));
+        // } else {
+        //     console.log(pc.yellow(`[Not implemented] Would create issue: ${title}`));
+        // }
     }
 }
 
-async function attemptAutoFix(
-    failures: TestResult[],
-    diagnosis: string,
-    dryRun: boolean
-): Promise<void> {
+async function attemptAutoFix(failures: TestResult[], _diagnosis: string, dryRun: boolean): Promise<void> {
     console.log(pc.blue('\nAttempting auto-fix for simple issues...'));
 
     // Only attempt to fix clear-cut issues
     const simpleFixPatterns = [
-        /import.*from ['"]([^'"]+)['"]/,  // Import issues
-        /Cannot find.*['"]([^'"]+)['"]/,   // Missing exports
-        /is not assignable to type/,        // Type mismatches
+        /import.*from ['"]([^'"]+)['"]/, // Import issues
+        /Cannot find.*['"]([^'"]+)['"]/, // Missing exports
+        /is not assignable to type/, // Type mismatches
     ];
 
-    const fixableFailures = failures.filter((f) =>
-        simpleFixPatterns.some((p) => p.test(f.error?.message || ''))
-    );
+    const fixableFailures = failures.filter((f) => simpleFixPatterns.some((p) => p.test(f.error?.message || '')));
 
     if (fixableFailures.length === 0) {
         console.log(pc.dim('No simple fixes identified'));

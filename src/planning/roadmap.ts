@@ -9,14 +9,9 @@
 
 import pc from 'picocolors';
 import { generate } from '../ai.js';
-import {
-    IssueMetrics,
-    calculateWeight,
-    detectIssueType,
-    groupByType,
-} from './weights.js';
-import { analyzeBacklogHealth } from './balance.js';
 import { getRepoContext, searchIssues } from '../octokit.js';
+import { analyzeBacklogHealth } from './balance.js';
+import { calculateWeight, detectIssueType, groupByType, type IssueMetrics } from './weights.js';
 
 /**
  * Get dynamic system prompt based on repository context
@@ -24,7 +19,7 @@ import { getRepoContext, searchIssues } from '../octokit.js';
 function getSystemPrompt(): string {
     const { owner, repo } = getRepoContext();
     const repoDescription = process.env.REPO_DESCRIPTION || `the ${repo} project`;
-    
+
     return `You are a product manager creating a roadmap for ${repoDescription} (${owner}/${repo}).
 
 Analyze the backlog and create a quarterly roadmap that:
@@ -87,12 +82,7 @@ export interface Roadmap {
 }
 
 export async function generateRoadmap(options: RoadmapOptions = {}): Promise<Roadmap> {
-    const {
-        quarters = 2,
-        includeCompleted = false,
-        dryRun = false,
-        verbose = false,
-    } = options;
+    const { quarters = 2, includeCompleted = false, dryRun = false, verbose = false } = options;
 
     console.log(pc.blue(`🗺️ Generating ${quarters}-quarter roadmap...`));
 
@@ -177,7 +167,7 @@ Format as:
     };
 
     // 5. Print roadmap
-    console.log('\n' + pc.bold('Generated Roadmap:'));
+    console.log(`\n${pc.bold('Generated Roadmap:')}`);
     console.log(roadmapText);
 
     if (dryRun) {

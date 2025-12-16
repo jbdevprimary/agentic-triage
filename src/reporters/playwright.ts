@@ -16,18 +16,18 @@
  * ```
  */
 
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import type {
     FullConfig,
     FullResult,
+    TestResult as PWTestResult,
     Reporter,
     Suite,
     TestCase,
-    TestResult as PWTestResult,
 } from '@playwright/test/reporter';
-import { writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { execFileSync } from 'node:child_process';
-import type { TestReport, TestFile, TestResult, TestError } from '../test-results.js';
+import type { TestError, TestFile, TestReport, TestResult } from '../test-results.js';
 
 export interface StrataPlaywrightReporterOptions {
     /** Output file path */
@@ -37,7 +37,7 @@ export interface StrataPlaywrightReporterOptions {
 class StrataPlaywrightReporter implements Reporter {
     private options: Required<StrataPlaywrightReporterOptions>;
     private testResults: Map<string, TestResult[]> = new Map();
-    private startTime = 0;
+    private startTime: number = 0;
 
     constructor(options: StrataPlaywrightReporterOptions = {}) {
         this.options = {
@@ -74,7 +74,7 @@ class StrataPlaywrightReporter implements Reporter {
             testResult.error = this.processError(result.errors[0]);
         }
 
-        this.testResults.get(filePath)!.push(testResult);
+        this.testResults.get(filePath)?.push(testResult);
     }
 
     async onEnd(result: FullResult): Promise<void> {

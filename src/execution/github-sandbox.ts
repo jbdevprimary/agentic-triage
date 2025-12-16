@@ -62,9 +62,7 @@ const MCP_UNAVAILABLE_MSG =
  *
  * @throws Error - GitHub Projects GraphQL not available via MCP
  */
-export async function createProjectSandbox(
-    options: ProjectSandboxOptions
-): Promise<SandboxProject> {
+export async function createProjectSandbox(options: ProjectSandboxOptions): Promise<SandboxProject> {
     const { owner } = getRepoContext();
     console.log(`Would create sandbox for project ${options.sourceProject} in ${options.owner || owner}`);
     throw new Error(MCP_UNAVAILABLE_MSG);
@@ -89,10 +87,7 @@ export async function copyIssueToSandbox(
  *
  * @throws Error - GitHub Projects GraphQL not available via MCP
  */
-export async function addIssueToProject(
-    projectId: string,
-    issueNodeId: string
-): Promise<string> {
+export async function addIssueToProject(projectId: string, issueNodeId: string): Promise<string> {
     console.log(`Would add issue ${issueNodeId} to project ${projectId}`);
     throw new Error(MCP_UNAVAILABLE_MSG);
 }
@@ -104,7 +99,7 @@ export async function addIssueToProject(
  */
 export async function runSandboxTest(
     sandbox: SandboxProject,
-    testFn: (sandbox: SandboxProject) => Promise<void>
+    _testFn: (sandbox: SandboxProject) => Promise<void>
 ): Promise<{ success: boolean; error?: Error }> {
     console.log(`Would run test against sandbox ${sandbox.sandboxId}`);
     throw new Error(MCP_UNAVAILABLE_MSG);
@@ -141,10 +136,7 @@ export async function createTestEnvironment(
  * Delete a project sandbox
  * @throws Error - GitHub Projects GraphQL not available via MCP
  */
-export async function deleteProjectSandbox(
-    sandbox: SandboxProject,
-    options?: { verbose?: boolean }
-): Promise<void> {
+export async function deleteProjectSandbox(sandbox: SandboxProject, _options?: { verbose?: boolean }): Promise<void> {
     console.log(`Would delete project ${sandbox.sandboxId}`);
     throw new Error(MCP_UNAVAILABLE_MSG);
 }
@@ -163,8 +155,8 @@ export async function deleteSandboxIssue(issue: CopiedIssue): Promise<void> {
  * @throws Error - GitHub Projects GraphQL not available via MCP
  */
 export async function withProjectSandbox<T>(
-    options: ProjectSandboxOptions,
-    fn: (sandbox: SandboxProject) => Promise<T>
+    _options: ProjectSandboxOptions,
+    _fn: (sandbox: SandboxProject) => Promise<T>
 ): Promise<T> {
     console.log(`Would create sandbox and execute function`);
     throw new Error(MCP_UNAVAILABLE_MSG);
@@ -174,10 +166,7 @@ export async function withProjectSandbox<T>(
  * Execute a function within an issue sandbox context
  * @throws Error - GitHub issue sandbox not available via MCP
  */
-export async function withIssueSandbox<T>(
-    issueNumber: number,
-    fn: (issue: CopiedIssue) => Promise<T>
-): Promise<T> {
+export async function withIssueSandbox<T>(_issueNumber: number, _fn: (issue: CopiedIssue) => Promise<T>): Promise<T> {
     console.log(`Would create issue sandbox and execute function`);
     throw new Error(MCP_UNAVAILABLE_MSG);
 }

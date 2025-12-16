@@ -10,19 +10,19 @@
  * This creates a self-perpetuating automation loop.
  */
 
+import { execFileSync } from 'node:child_process';
 import pc from 'picocolors';
-import { execFileSync, spawn } from 'node:child_process';
-import { getRepoContext, searchIssues } from '../octokit.js';
+import { searchIssues } from '../octokit.js';
 
 export type CascadeStep =
-    | 'plan'        // Sprint planning
-    | 'develop'     // Code development
-    | 'test'        // Test generation
-    | 'diagnose'    // Test failure diagnosis
-    | 'fix'         // Bug fixing
-    | 'verify'      // PR verification
-    | 'review'      // Code review
-    | 'merge';      // Auto-merge
+    | 'plan' // Sprint planning
+    | 'develop' // Code development
+    | 'test' // Test generation
+    | 'diagnose' // Test failure diagnosis
+    | 'fix' // Bug fixing
+    | 'verify' // PR verification
+    | 'review' // Code review
+    | 'merge'; // Auto-merge
 
 export interface CascadeConfig {
     /** Steps to include in the cascade */
@@ -144,10 +144,7 @@ async function executeStep(step: CascadeStep, config: CascadeConfig): Promise<Ca
     }
 }
 
-async function executePlanStep(
-    config: CascadeConfig,
-    spawned: SpawnedTask[]
-): Promise<CascadeResult> {
+async function executePlanStep(config: CascadeConfig, spawned: SpawnedTask[]): Promise<CascadeResult> {
     if (config.dryRun) {
         return { step: 'plan', status: 'success', duration: 0, spawned };
     }
@@ -167,17 +164,14 @@ async function executePlanStep(
     return { step: 'plan', status: 'success', output, duration: 0, spawned };
 }
 
-async function executeDevelopStep(
-    config: CascadeConfig,
-    spawned: SpawnedTask[]
-): Promise<CascadeResult> {
+async function executeDevelopStep(config: CascadeConfig, spawned: SpawnedTask[]): Promise<CascadeResult> {
     // Find issues with ready-for-aider label via MCP search
     const issues = await searchIssues('is:open is:issue label:ready-for-aider');
 
     if (config.dryRun) {
-        issues.slice(0, config.maxParallel).forEach((issue) =>
-            spawned.push({ step: 'test', target: String(issue.number) })
-        );
+        for (const issue of issues.slice(0, config.maxParallel)) {
+            spawned.push({ step: 'test', target: String(issue.number) });
+        }
         return { step: 'develop', status: 'success', duration: 0, spawned };
     }
 
@@ -196,17 +190,14 @@ async function executeDevelopStep(
     return { step: 'develop', status: 'success', duration: 0, spawned };
 }
 
-async function executeTestStep(
-    config: CascadeConfig,
-    spawned: SpawnedTask[]
-): Promise<CascadeResult> {
+async function executeTestStep(config: CascadeConfig, spawned: SpawnedTask[]): Promise<CascadeResult> {
     // Find issues with needs-tests label via MCP search
     const issues = await searchIssues('is:open is:issue label:needs-tests');
 
     if (config.dryRun) {
-        issues.slice(0, config.maxParallel).forEach((issue) =>
-            spawned.push({ step: 'verify', target: String(issue.number) })
-        );
+        for (const issue of issues.slice(0, config.maxParallel)) {
+            spawned.push({ step: 'verify', target: String(issue.number) });
+        }
         return { step: 'test', status: 'success', duration: 0, spawned };
     }
 
@@ -220,10 +211,7 @@ async function executeTestStep(
     return { step: 'test', status: 'success', duration: 0, spawned };
 }
 
-async function executeDiagnoseStep(
-    config: CascadeConfig,
-    spawned: SpawnedTask[]
-): Promise<CascadeResult> {
+async function executeDiagnoseStep(config: CascadeConfig, spawned: SpawnedTask[]): Promise<CascadeResult> {
     // This step runs after test failures
     // It analyzes test results and may spawn fix tasks
 
@@ -239,17 +227,14 @@ async function executeDiagnoseStep(
     return { step: 'diagnose', status: 'success', duration: 0, spawned };
 }
 
-async function executeFixStep(
-    config: CascadeConfig,
-    spawned: SpawnedTask[]
-): Promise<CascadeResult> {
+async function executeFixStep(config: CascadeConfig, spawned: SpawnedTask[]): Promise<CascadeResult> {
     // Find issues with bug label and needs-fix via MCP search
     const issues = await searchIssues('is:open is:issue label:bug label:needs-fix');
 
     if (config.dryRun) {
-        issues.slice(0, config.maxParallel).forEach((issue) =>
-            spawned.push({ step: 'verify', target: String(issue.number) })
-        );
+        for (const issue of issues.slice(0, config.maxParallel)) {
+            spawned.push({ step: 'verify', target: String(issue.number) });
+        }
         return { step: 'fix', status: 'success', duration: 0, spawned };
     }
 
@@ -263,17 +248,14 @@ async function executeFixStep(
     return { step: 'fix', status: 'success', duration: 0, spawned };
 }
 
-async function executeVerifyStep(
-    config: CascadeConfig,
-    spawned: SpawnedTask[]
-): Promise<CascadeResult> {
+async function executeVerifyStep(config: CascadeConfig, spawned: SpawnedTask[]): Promise<CascadeResult> {
     // Search for PRs with needs-verification label via MCP
     const prs = await searchIssues('is:open is:pr label:needs-verification');
 
     if (config.dryRun) {
-        prs.slice(0, config.maxParallel).forEach((pr) =>
-            spawned.push({ step: 'review', target: String(pr.number) })
-        );
+        for (const pr of prs.slice(0, config.maxParallel)) {
+            spawned.push({ step: 'review', target: String(pr.number) });
+        }
         return { step: 'verify', status: 'success', duration: 0, spawned };
     }
 
@@ -287,17 +269,14 @@ async function executeVerifyStep(
     return { step: 'verify', status: 'success', duration: 0, spawned };
 }
 
-async function executeReviewStep(
-    config: CascadeConfig,
-    spawned: SpawnedTask[]
-): Promise<CascadeResult> {
+async function executeReviewStep(config: CascadeConfig, spawned: SpawnedTask[]): Promise<CascadeResult> {
     // Search for open PRs via MCP
     const prs = await searchIssues('is:open is:pr');
 
     if (config.dryRun) {
-        prs.slice(0, config.maxParallel).forEach((pr) =>
-            spawned.push({ step: 'merge', target: String(pr.number) })
-        );
+        for (const pr of prs.slice(0, config.maxParallel)) {
+            spawned.push({ step: 'merge', target: String(pr.number) });
+        }
         return { step: 'review', status: 'success', duration: 0, spawned };
     }
 
@@ -312,10 +291,7 @@ async function executeReviewStep(
     return { step: 'review', status: 'success', duration: 0, spawned };
 }
 
-async function executeMergeStep(
-    config: CascadeConfig,
-    spawned: SpawnedTask[]
-): Promise<CascadeResult> {
+async function executeMergeStep(config: CascadeConfig, spawned: SpawnedTask[]): Promise<CascadeResult> {
     if (config.dryRun) {
         return { step: 'merge', status: 'success', duration: 0, spawned };
     }
@@ -334,7 +310,7 @@ function runTriageCommand(args: string[]): string {
             encoding: 'utf-8',
             stdio: 'pipe',
         });
-    } catch (error) {
+    } catch (_error) {
         return '';
     }
 }

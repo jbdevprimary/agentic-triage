@@ -30,7 +30,7 @@
 import { experimental_createMCPClient as createMCPClient } from '@ai-sdk/mcp';
 import { Experimental_StdioMCPTransport as StdioMCPTransport } from '@ai-sdk/mcp/mcp-stdio';
 import { generateText, stepCountIs } from 'ai';
-import { getProvider, getModel, type ToolSet } from './ai.js';
+import { resolveModel, type ToolSet } from './ai.js';
 
 export type MCPClient = Awaited<ReturnType<typeof createMCPClient>>;
 
@@ -55,9 +55,7 @@ export async function createFilesystemClient(workingDirectory: string): Promise<
  * Provides: read_file, write_file, list_files, search_files
  * All paths are sandboxed to workingDirectory for security.
  */
-export async function createInlineFilesystemClient(
-    workingDirectory: string
-): Promise<MCPClient> {
+export async function createInlineFilesystemClient(workingDirectory: string): Promise<MCPClient> {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
     const os = await import('node:os');
@@ -308,18 +306,15 @@ export async function getGitHubTools(client: MCPClient): Promise<ToolSet> {
  * - browser_snapshot, browser_take_screenshot
  * - browser_verify_* (with testing capabilities)
  */
-export async function createPlaywrightClient(options: {
-    headless?: boolean;
-    browser?: 'chromium' | 'firefox' | 'webkit';
-    outputDir?: string;
-    testingCapabilities?: boolean;
-} = {}): Promise<MCPClient> {
-    const {
-        headless = true,
-        browser = 'chromium',
-        outputDir = './test-output',
-        testingCapabilities = true,
-    } = options;
+export async function createPlaywrightClient(
+    options: {
+        headless?: boolean;
+        browser?: 'chromium' | 'firefox' | 'webkit';
+        outputDir?: string;
+        testingCapabilities?: boolean;
+    } = {}
+): Promise<MCPClient> {
+    const { headless = true, browser = 'chromium', outputDir = './test-output', testingCapabilities = true } = options;
 
     const args = ['-y', '@playwright/mcp@latest'];
 
@@ -369,7 +364,7 @@ export async function createContext7Client(): Promise<MCPClient> {
         transport: {
             type: 'http',
             url: 'https://mcp.context7.com/mcp',
-            headers: apiKey ? { 'CONTEXT7_API_KEY': apiKey } : undefined,
+            headers: apiKey ? { CONTEXT7_API_KEY: apiKey } : undefined,
         },
     });
 
@@ -405,12 +400,14 @@ export async function getContext7Tools(client: MCPClient): Promise<ToolSet> {
  *
  * Requires the app to be running with vite-react-mcp plugin installed.
  */
-export async function createViteReactClient(options: {
-    /** URL of the Vite dev server SSE endpoint (default: http://localhost:5173/sse) */
-    url?: string;
-    /** Port number (alternative to full URL) */
-    port?: number;
-} = {}): Promise<MCPClient> {
+export async function createViteReactClient(
+    options: {
+        /** URL of the Vite dev server SSE endpoint (default: http://localhost:5173/sse) */
+        url?: string;
+        /** Port number (alternative to full URL) */
+        port?: number;
+    } = {}
+): Promise<MCPClient> {
     const { port = 5173 } = options;
     const url = options.url || `http://localhost:${port}/sse`;
 
@@ -489,25 +486,29 @@ export interface MCPClients {
 
 export interface MCPClientOptions {
     /** Enable filesystem access (required for most tasks) */
-    filesystem?: boolean | string;  // string = custom working directory
+    filesystem?: boolean | string; // string = custom working directory
 
     /** Enable GitHub API access */
     github?: boolean;
 
     /** Enable Playwright browser automation */
-    playwright?: boolean | {
-        headless?: boolean;
-        browser?: 'chromium' | 'firefox' | 'webkit';
-    };
+    playwright?:
+        | boolean
+        | {
+              headless?: boolean;
+              browser?: 'chromium' | 'firefox' | 'webkit';
+          };
 
     /** Enable Context7 documentation lookup (PREVENTS HALLUCINATIONS!) */
     context7?: boolean;
 
     /** Enable Vite React component debugging */
-    viteReact?: boolean | {
-        url?: string;
-        port?: number;
-    };
+    viteReact?:
+        | boolean
+        | {
+              url?: string;
+              port?: number;
+          };
 
     /** Enable GitHub GraphQL API access via mcp-graphql */
     graphql?: boolean;
@@ -531,16 +532,20 @@ export async function initializeMCPClients(options: MCPClientOptions): Promise<M
         const dir = typeof options.filesystem === 'string' ? options.filesystem : process.cwd();
         initPromises.push(
             createFilesystemClient(dir)
-                .then(client => { clients.filesystem = client; })
-                .catch(err => console.warn('⚠️ Filesystem MCP unavailable:', err.message))
+                .then((client) => {
+                    clients.filesystem = client;
+                })
+                .catch((err) => console.warn('⚠️ Filesystem MCP unavailable:', err.message))
         );
     }
 
     if (options.github) {
         initPromises.push(
             createGitHubClient()
-                .then(client => { clients.github = client; })
-                .catch(err => console.warn('⚠️ GitHub MCP unavailable:', err.message))
+                .then((client) => {
+                    clients.github = client;
+                })
+                .catch((err) => console.warn('⚠️ GitHub MCP unavailable:', err.message))
         );
     }
 
@@ -548,16 +553,20 @@ export async function initializeMCPClients(options: MCPClientOptions): Promise<M
         const playwrightOpts = typeof options.playwright === 'object' ? options.playwright : {};
         initPromises.push(
             createPlaywrightClient(playwrightOpts)
-                .then(client => { clients.playwright = client; })
-                .catch(err => console.warn('⚠️ Playwright MCP unavailable:', err.message))
+                .then((client) => {
+                    clients.playwright = client;
+                })
+                .catch((err) => console.warn('⚠️ Playwright MCP unavailable:', err.message))
         );
     }
 
     if (options.context7) {
         initPromises.push(
             createContext7Client()
-                .then(client => { clients.context7 = client; })
-                .catch(err => console.warn('⚠️ Context7 MCP unavailable:', err.message))
+                .then((client) => {
+                    clients.context7 = client;
+                })
+                .catch((err) => console.warn('⚠️ Context7 MCP unavailable:', err.message))
         );
     }
 
@@ -565,16 +574,20 @@ export async function initializeMCPClients(options: MCPClientOptions): Promise<M
         const viteOpts = typeof options.viteReact === 'object' ? options.viteReact : {};
         initPromises.push(
             createViteReactClient(viteOpts)
-                .then(client => { clients.viteReact = client; })
-                .catch(err => console.warn('⚠️ Vite React MCP unavailable:', err.message))
+                .then((client) => {
+                    clients.viteReact = client;
+                })
+                .catch((err) => console.warn('⚠️ Vite React MCP unavailable:', err.message))
         );
     }
 
     if (options.graphql) {
         initPromises.push(
             createGraphQLClient()
-                .then(client => { clients.graphql = client; })
-                .catch(err => console.warn('⚠️ GraphQL MCP unavailable:', err.message))
+                .then((client) => {
+                    clients.graphql = client;
+                })
+                .catch((err) => console.warn('⚠️ GraphQL MCP unavailable:', err.message))
         );
     }
 
@@ -594,8 +607,11 @@ export async function getAllTools(clients: MCPClients): Promise<ToolSet> {
     for (const [name, client] of Object.entries(clients)) {
         if (client) {
             toolPromises.push(
-                client.tools()
-                    .then((tools: ToolSet) => { Object.assign(allTools, tools); })
+                client
+                    .tools()
+                    .then((tools: ToolSet) => {
+                        Object.assign(allTools, tools);
+                    })
                     .catch((err: Error) => console.warn(`⚠️ Failed to get tools from ${name}:`, err.message))
             );
         }
@@ -689,12 +705,11 @@ export async function runAgenticTask(options: AgenticTaskOptions): Promise<Agent
             throw new Error('No MCP tools available - check MCP server connections');
         }
 
-        const provider = getProvider();
-        const modelId = getModel();
+        const resolved = await resolveModel();
 
         // Run the AI with multi-step tool support
         const result = await generateText({
-            model: provider(modelId),
+            model: resolved.model,
             system: systemPrompt,
             prompt: userPrompt,
             tools,
@@ -722,10 +737,7 @@ export async function runAgenticTask(options: AgenticTaskOptions): Promise<Agent
         });
 
         // Count total tool calls across all steps
-        const toolCallCount = result.steps?.reduce(
-            (acc, step) => acc + (step.toolCalls?.length || 0),
-            0
-        ) || 0;
+        const toolCallCount = result.steps?.reduce((acc, step) => acc + (step.toolCalls?.length || 0), 0) || 0;
 
         return {
             text: result.text,
@@ -733,7 +745,6 @@ export async function runAgenticTask(options: AgenticTaskOptions): Promise<Agent
             steps: result.steps || [],
             finishReason: result.finishReason,
         };
-
     } finally {
         // ALWAYS close clients
         await closeMCPClients(clients);

@@ -9,10 +9,10 @@
  * Uses memfs for in-memory filesystem or a temp directory.
  */
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import * as os from 'node:os';
 import * as crypto from 'node:crypto';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
 export interface SandboxOptions {
     /** Base directory to clone */
@@ -53,10 +53,7 @@ export class Sandbox {
      */
     async init(): Promise<string> {
         // Create temp directory
-        this.tempDir = path.join(
-            os.tmpdir(),
-            `triage-sandbox-${crypto.randomBytes(8).toString('hex')}`
-        );
+        this.tempDir = path.join(os.tmpdir(), `triage-sandbox-${crypto.randomBytes(8).toString('hex')}`);
         fs.mkdirSync(this.tempDir, { recursive: true });
 
         // Load fixtures if specified
@@ -224,10 +221,7 @@ export class Sandbox {
 
             actualFiles.delete(expectedFile);
 
-            const expectedContent = fs.readFileSync(
-                path.join(expectedDir, expectedFile),
-                'utf-8'
-            );
+            const expectedContent = fs.readFileSync(path.join(expectedDir, expectedFile), 'utf-8');
             const actualContent = this.readFile(expectedFile);
 
             if (expectedContent === actualContent) {

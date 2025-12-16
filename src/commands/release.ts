@@ -9,9 +9,9 @@
  * - Handles tagging and version updates
  */
 
-import pc from 'picocolors';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import pc from 'picocolors';
 import { generate } from '../ai.js';
 import { getRepoContext } from '../octokit.js';
 
@@ -36,7 +36,8 @@ interface Commit {
     author: string;
 }
 
-interface ReleaseInfo {
+// ReleaseInfo interface kept for future use in release planning
+interface _ReleaseInfo {
     version: string;
     bump: 'major' | 'minor' | 'patch';
     commits: Commit[];
@@ -47,12 +48,12 @@ interface ReleaseInfo {
 export interface ReleaseOptions {
     dryRun?: boolean;
     verbose?: boolean;
-    prerelease?: string;  // e.g., 'alpha', 'beta', 'rc'
+    prerelease?: string; // e.g., 'alpha', 'beta', 'rc'
     skipChangelog?: boolean;
     skipTag?: boolean;
     skipGithub?: boolean;
     skipNpm?: boolean;
-    npmTag?: string;  // e.g., 'latest', 'next', 'beta'
+    npmTag?: string; // e.g., 'latest', 'next', 'beta'
 }
 
 export async function releaseCommand(options: ReleaseOptions = {}): Promise<void> {
@@ -92,7 +93,7 @@ export async function releaseCommand(options: ReleaseOptions = {}): Promise<void
     // Determine version bump
     const bump = determineBump(commits, options.prerelease);
     const newVersion = bumpVersion(currentVersion, bump, options.prerelease);
-    const hasBreaking = commits.some(c => c.breaking);
+    const hasBreaking = commits.some((c) => c.breaking);
 
     console.log(pc.blue(`\n📦 Version: ${currentVersion} → ${pc.bold(newVersion)} (${bump})`));
     if (hasBreaking) {
@@ -104,7 +105,7 @@ export async function releaseCommand(options: ReleaseOptions = {}): Promise<void
     if (!options.skipChangelog) {
         console.log(pc.blue('\n📝 Generating changelog with AI...'));
         changelog = await generateChangelog(commits, newVersion);
-        
+
         if (verbose) {
             console.log(pc.dim('\n--- Changelog Preview ---'));
             console.log(changelog.slice(0, 1000));
@@ -120,7 +121,8 @@ export async function releaseCommand(options: ReleaseOptions = {}): Promise<void
         if (!options.skipTag) console.log(pc.dim(`  - Create git tag v${newVersion}`));
         if (!options.skipTag) console.log(pc.dim(`  - Push commits and tags`));
         if (!options.skipGithub) console.log(pc.dim(`  - Create GitHub release`));
-        if (!options.skipNpm) console.log(pc.dim(`  - Publish to npm${options.npmTag ? ` with tag '${options.npmTag}'` : ''}`));
+        if (!options.skipNpm)
+            console.log(pc.dim(`  - Publish to npm${options.npmTag ? ` with tag '${options.npmTag}'` : ''}`));
         // Machine-readable output for CI workflow detection
         console.log('\nRELEASE_PUBLISHED=false');
         console.log(`RELEASE_VERSION=${newVersion}`);
@@ -130,7 +132,7 @@ export async function releaseCommand(options: ReleaseOptions = {}): Promise<void
     // Update package.json
     console.log(pc.blue('\n📄 Updating package.json...'));
     packageJson.version = newVersion;
-    writeFileSync('package.json', JSON.stringify(packageJson, null, 2) + '\n');
+    writeFileSync('package.json', `${JSON.stringify(packageJson, null, 2)}\n`);
 
     // Update CHANGELOG.md
     if (!options.skipChangelog && changelog) {
@@ -199,7 +201,7 @@ function getLastTag(): string | null {
 function getCommitsSinceTag(tag: string | null): Commit[] {
     const range = tag ? `${tag}..HEAD` : 'HEAD';
     const format = '%H%n%s%n%b%n%an%n---COMMIT---';
-    
+
     let output: string;
     try {
         output = execFileSync('git', ['log', range, `--format=${format}`], {
@@ -251,9 +253,9 @@ function getCommitsSinceTag(tag: string | null): Commit[] {
 }
 
 function determineBump(commits: Commit[], prerelease?: string): 'major' | 'minor' | 'patch' {
-    const hasBreaking = commits.some(c => c.breaking);
-    const hasFeature = commits.some(c => c.type === 'feat');
-    
+    const hasBreaking = commits.some((c) => c.breaking);
+    const hasFeature = commits.some((c) => c.type === 'feat');
+
     if (hasBreaking && !prerelease) return 'major';
     if (hasFeature) return 'minor';
     return 'patch';
@@ -261,7 +263,7 @@ function determineBump(commits: Commit[], prerelease?: string): 'major' | 'minor
 
 function bumpVersion(current: string, bump: 'major' | 'minor' | 'patch', prerelease?: string): string {
     const [major, minor, patch] = current.replace(/-.*$/, '').split('.').map(Number);
-    
+
     let newVersion: string;
     switch (bump) {
         case 'major':
@@ -279,7 +281,7 @@ function bumpVersion(current: string, bump: 'major' | 'minor' | 'patch', prerele
         // Check if already has prerelease of same type
         const prereleaseMatch = current.match(new RegExp(`-${prerelease}\\.(\\d+)$`));
         if (prereleaseMatch) {
-            const num = parseInt(prereleaseMatch[1]) + 1;
+            const num = parseInt(prereleaseMatch[1], 10) + 1;
             newVersion = `${current.replace(/-.*$/, '')}-${prerelease}.${num}`;
         } else {
             newVersion = `${newVersion}-${prerelease}.0`;
@@ -290,12 +292,14 @@ function bumpVersion(current: string, bump: 'major' | 'minor' | 'patch', prerele
 }
 
 async function generateChangelog(commits: Commit[], version: string): Promise<string> {
-    const commitList = commits.map(c => {
-        let line = `- ${c.type}${c.scope ? `(${c.scope})` : ''}: ${c.subject}`;
-        if (c.breaking) line += ' [BREAKING]';
-        line += ` (@${c.author})`;
-        return line;
-    }).join('\n');
+    const commitList = commits
+        .map((c) => {
+            let line = `- ${c.type}${c.scope ? `(${c.scope})` : ''}: ${c.subject}`;
+            if (c.breaking) line += ' [BREAKING]';
+            line += ` (@${c.author})`;
+            return line;
+        })
+        .join('\n');
 
     const prompt = `Generate a changelog for version ${version} from these commits:
 
@@ -314,12 +318,12 @@ Create a well-organized, user-friendly changelog.`;
 
 function generateSimpleChangelog(commits: Commit[], version: string): string {
     const groups: Record<string, Commit[]> = {
-        'Breaking Changes': commits.filter(c => c.breaking),
-        'Features': commits.filter(c => c.type === 'feat' && !c.breaking),
-        'Bug Fixes': commits.filter(c => c.type === 'fix'),
-        'Performance': commits.filter(c => c.type === 'perf'),
-        'Documentation': commits.filter(c => c.type === 'docs'),
-        'Other': commits.filter(c => !['feat', 'fix', 'perf', 'docs'].includes(c.type) && !c.breaking),
+        'Breaking Changes': commits.filter((c) => c.breaking),
+        Features: commits.filter((c) => c.type === 'feat' && !c.breaking),
+        'Bug Fixes': commits.filter((c) => c.type === 'fix'),
+        Performance: commits.filter((c) => c.type === 'perf'),
+        Documentation: commits.filter((c) => c.type === 'docs'),
+        Other: commits.filter((c) => !['feat', 'fix', 'perf', 'docs'].includes(c.type) && !c.breaking),
     };
 
     let changelog = `## ${version} (${new Date().toISOString().split('T')[0]})\n\n`;
@@ -336,10 +340,10 @@ function generateSimpleChangelog(commits: Commit[], version: string): string {
     return changelog;
 }
 
-function updateChangelog(version: string, content: string): void {
+function updateChangelog(_version: string, content: string): void {
     const changelogPath = 'CHANGELOG.md';
     let existing = '';
-    
+
     if (existsSync(changelogPath)) {
         existing = readFileSync(changelogPath, 'utf-8');
     }
@@ -347,8 +351,8 @@ function updateChangelog(version: string, content: string): void {
     // Insert new version after header
     const header = '# Changelog\n\nAll notable changes to this project will be documented in this file.\n\n';
     const newContent = existing.startsWith('# Changelog')
-        ? existing.replace(/^# Changelog.*?\n\n/, header + content + '\n')
-        : header + content + '\n' + existing;
+        ? existing.replace(/^# Changelog.*?\n\n/, `${header + content}\n`)
+        : `${header + content}\n${existing}`;
 
     writeFileSync(changelogPath, newContent);
 }
@@ -356,22 +360,18 @@ function updateChangelog(version: string, content: string): void {
 async function createGitHubRelease(
     version: string,
     changelog: string,
-    isBreaking: boolean,
+    _isBreaking: boolean,
     prerelease?: string
 ): Promise<void> {
-    const { owner, repo } = getRepoContext();
+    // owner/repo context available if needed for future API integration
+    const { owner: _owner, repo: _repo } = getRepoContext();
 
     // GitHub release creation not available via MCP
     // Use gh CLI as fallback
     console.log(pc.dim(`Creating GitHub release v${version}...`));
 
     try {
-        const args = [
-            'release', 'create',
-            `v${version}`,
-            '--title', `v${version}`,
-            '--notes', changelog,
-        ];
+        const args = ['release', 'create', `v${version}`, '--title', `v${version}`, '--notes', changelog];
         if (prerelease) {
             args.push('--prerelease');
         }

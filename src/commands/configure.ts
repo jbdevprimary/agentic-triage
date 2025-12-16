@@ -28,8 +28,8 @@ export async function configureRepository(options: ConfigureOptions = {}): Promi
         disableDefaultCodeQL = true,
         enableDependabot = true,
         enableSecretScanning = true,
-        dryRun = false,
-        verbose = false,
+        dryRun: _dryRun = false,
+        verbose: _verbose = false,
     } = options;
 
     const { owner, repo } = getRepoContext();

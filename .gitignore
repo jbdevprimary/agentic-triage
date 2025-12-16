@@ -1,6 +1,12 @@
 # Dependencies
 node_modules/
 
+# Package managers - pnpm only
+package-lock.json
+npm-debug.log*
+yarn.lock
+.yarn/
+
 # Build output
 dist/
 
@@ -30,3 +36,9 @@ pnpm-debug.log*
 
 # Test artifacts
 test-results/
+
+# Triage harness artifacts
+.triage-recordings/
+
+# Core dumps / accidental dumps
+core

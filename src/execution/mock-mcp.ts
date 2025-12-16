@@ -9,16 +9,10 @@
  * The AI has no idea it's not talking to a real system.
  */
 
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { execFileSync } from 'node:child_process';
-import {
-    type FixtureRepo,
-    type FixtureIssue,
-    type FixturePR,
-    loadMockIssues,
-    loadMockPRs,
-} from './fixtures.js';
+import { type FixtureIssue, type FixturePR, type FixtureRepo, loadMockIssues, loadMockPRs } from './fixtures.js';
 
 export interface MockMCPOptions {
     /** The fixture repository to operate on */
@@ -78,9 +72,13 @@ export class MockMCPProvider {
         return {
             // Filesystem tools (redirect to fixture)
             read_file: this.createFilesystemTool('read_file', (args) => this.readFile(args as { path: string })),
-            write_file: this.createFilesystemTool('write_file', (args) => this.writeFile(args as { path: string; content: string })),
+            write_file: this.createFilesystemTool('write_file', (args) =>
+                this.writeFile(args as { path: string; content: string })
+            ),
             list_files: this.createFilesystemTool('list_files', (args) => this.listFiles(args as { path?: string })),
-            search_files: this.createFilesystemTool('search_files', (args) => this.searchFiles(args as { pattern: string; path?: string })),
+            search_files: this.createFilesystemTool('search_files', (args) =>
+                this.searchFiles(args as { pattern: string; path?: string })
+            ),
             delete_file: this.createFilesystemTool('delete_file', (args) => this.deleteFile(args as { path: string })),
 
             // Git tools (real but isolated)
@@ -91,11 +89,19 @@ export class MockMCPProvider {
             git_log: this.createGitTool('git_log', (args) => this.gitLog(args as { count?: number })),
 
             // GitHub tools (mock data)
-            github_get_issue: this.createGitHubTool('github_get_issue', (args) => this.getIssue(args as { number: number })),
-            github_add_labels: this.createGitHubTool('github_add_labels', (args) => this.addLabels(args as { number: number; labels: string[] })),
-            github_comment: this.createGitHubTool('github_comment', (args) => this.addComment(args as { number: number; body: string })),
+            github_get_issue: this.createGitHubTool('github_get_issue', (args) =>
+                this.getIssue(args as { number: number })
+            ),
+            github_add_labels: this.createGitHubTool('github_add_labels', (args) =>
+                this.addLabels(args as { number: number; labels: string[] })
+            ),
+            github_comment: this.createGitHubTool('github_comment', (args) =>
+                this.addComment(args as { number: number; body: string })
+            ),
             github_get_pr: this.createGitHubTool('github_get_pr', (args) => this.getPR(args as { number: number })),
-            github_list_issues: this.createGitHubTool('github_list_issues', (args) => this.listIssues(args as { state?: string; labels?: string[] })),
+            github_list_issues: this.createGitHubTool('github_list_issues', (args) =>
+                this.listIssues(args as { state?: string; labels?: string[] })
+            ),
         };
     }
 
@@ -139,7 +145,10 @@ export class MockMCPProvider {
         return results;
     }
 
-    private searchFiles(args: { pattern: string; path?: string }): Array<{ file: string; line: number; content: string }> {
+    private searchFiles(args: {
+        pattern: string;
+        path?: string;
+    }): Array<{ file: string; line: number; content: string }> {
         const files = this.listFiles({ path: args.path });
         const results: Array<{ file: string; line: number; content: string }> = [];
         const regex = new RegExp(args.pattern, 'gi');
@@ -298,16 +307,14 @@ export class MockMCPProvider {
     }
 
     private createTrackedTool(name: string, category: string, fn: (args: unknown) => unknown): MockTool {
-        const self = this;
-
         return {
             name,
             category,
             execute: async (args: Record<string, unknown>) => {
                 const result = fn(args);
 
-                if (self.trackOperations) {
-                    self.operations.push({
+                if (this.trackOperations) {
+                    this.operations.push({
                         timestamp: new Date().toISOString(),
                         tool: name,
                         args,
@@ -325,9 +332,7 @@ export class MockMCPProvider {
      */
     getState(): MockState {
         return {
-            issueLabels: Object.fromEntries(
-                [...this.issueLabels.entries()].map(([k, v]) => [k, [...v]])
-            ),
+            issueLabels: Object.fromEntries([...this.issueLabels.entries()].map(([k, v]) => [k, [...v]])),
             issueComments: Object.fromEntries(this.issueComments.entries()),
             files: this.listFiles({}),
             gitLog: this.gitLog({ count: 10 }),

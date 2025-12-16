@@ -1,28 +1,24 @@
-export { assess, type AssessOptions } from './assess.js';
-export { review, type ReviewOptions } from './review.js';
-export { autoLabel, type LabelOptions } from './label.js';
-export { develop, type DevelopOptions } from './develop.js';
-export { test, type TestOptions } from './test.js';
-export { plan, type PlanOptions } from './plan.js';
-export { verify, type VerifyOptions } from './verify.js';
-export { diagnose, type DiagnoseOptions } from './diagnose.js';
-export { coverage, type CoverageOptions } from './coverage.js';
-export { generateTests, type GenerateOptions } from './generate.js';
-export { security, type SecurityOptions } from './security.js';
-export { automerge, type AutomergeOptions } from './automerge.js';
-
-// Planning commands
-export { sprint, type SprintCommandOptions } from './sprint.js';
-export { roadmap, type RoadmapCommandOptions } from './roadmap.js';
-export { cascade, type CascadeCommandOptions } from './cascade.js';
-
-// Test harness
-export { harness, type HarnessCommandOptions } from './harness.js';
-
+export { type AssessOptions, assess } from './assess.js';
+export { type AutomergeOptions, automerge } from './automerge.js';
+export { type CascadeCommandOptions, cascade } from './cascade.js';
+export { type ConfigureOptions, configureRepository } from './configure.js';
+export { type CoverageOptions, coverage } from './coverage.js';
+export { type DevelopOptions, develop } from './develop.js';
+export { type DiagnoseOptions, diagnose } from './diagnose.js';
 // PR feedback
 export { handleFeedback } from './feedback.js';
-
+export { type GenerateOptions, generateTests } from './generate.js';
+// Test harness
+export { type HarnessCommandOptions, harness } from './harness.js';
+export { autoLabel, type LabelOptions } from './label.js';
+export { type PlanOptions, plan } from './plan.js';
 // Release management
-export { releaseCommand, type ReleaseOptions } from './release.js';
-export { scan, type ScanOptions, type ScanResult } from './scan.js';
-export { configureRepository, type ConfigureOptions } from './configure.js';
+export { type ReleaseOptions, releaseCommand } from './release.js';
+export { type ReviewOptions, review } from './review.js';
+export { type RoadmapCommandOptions, roadmap } from './roadmap.js';
+export { type ScanOptions, type ScanResult, scan } from './scan.js';
+export { type SecurityOptions, security } from './security.js';
+// Planning commands
+export { type SprintCommandOptions, sprint } from './sprint.js';
+export { type TestOptions, test } from './test.js';
+export { type VerifyOptions, verify } from './verify.js';

@@ -4,147 +4,234 @@
 [![Coverage Status](https://coveralls.io/repos/github/jbdevprimary/agentic-triage/badge.svg?branch=main)](https://coveralls.io/github/jbdevprimary/agentic-triage?branch=main)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> AI-powered GitHub issue triage, PR review, and sprint planning CLI
+> Portable triage primitives for AI agents - Vercel AI SDK tools, MCP server, and direct API
 
-**agentic-triage** is an autonomous development automation tool powered by [agentic-control](https://github.com/jbdevprimary/agentic-control). It handles the entire development lifecycle - from issue triage to release - using AI-driven automation with the Vercel AI SDK and Ollama.
+**agentic-triage** provides reusable triage primitives for AI agent systems. It offers three integration patterns:
+
+1. **Vercel AI SDK Tools** - Portable tools for any Vercel AI SDK application
+2. **MCP Server** - Model Context Protocol server for Claude Desktop, Cursor, etc.
+3. **Direct TypeScript API** - Programmatic access for non-AI use cases
 
 ## Installation
 
 ```bash
 # npm
-npm install -g agentic-triage
+npm install agentic-triage
 
 # pnpm
-pnpm add -g agentic-triage
-
-# Or run directly with npx
-npx agentic-triage --help
+pnpm add agentic-triage
 ```
 
 ## Quick Start
 
-```bash
-# Assess an issue with AI
-agentic-triage assess 123
+### 1. Vercel AI SDK Tools (Recommended for AI Agents)
 
-# Generate tests for a file
-agentic-triage generate src/core/math/noise.ts --type unit
+```typescript
+import { getTriageTools } from 'agentic-triage';
+import { generateText } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
 
-# Review a PR
-agentic-triage review 144
-
-# Run a full sprint planning cycle
-agentic-triage sprint
+const result = await generateText({
+  model: anthropic('claude-sonnet-4-20250514'),
+  tools: getTriageTools(),
+  prompt: 'List all open high-priority bugs and create a triage plan',
+});
 ```
 
-## Commands
+#### Selective Tool Import
 
-### Issue & PR Management
+```typescript
+import { getIssueTools, getReviewTools, getProjectTools } from 'agentic-triage';
 
-| Command | Description |
-|---------|-------------|
-| `assess <issue>` | AI analyzes issue and adds labels, estimates |
-| `label <issue>` | Auto-label based on content |
-| `plan <issue>` | Create implementation plan with sub-tasks |
-| `develop <issue>` | AI implements the issue (creates PR) |
-| `review <pr>` | AI code review with suggestions |
-| `feedback <pr>` | Process review comments, resolve threads |
-| `verify <pr>` | Run tests and validate PR |
-| `automerge <pr> <action>` | Manage auto-merge (enable/disable/wait) |
+// Only import what your agent needs
+const myAgentTools = {
+  ...getIssueTools(),    // Issue CRUD, search, labels
+  ...getReviewTools(),   // PR review, comments, approval
+};
+```
 
-### Testing & Quality
+#### Individual Tools
 
-| Command | Description |
-|---------|-------------|
-| `test <issue>` | Generate and run tests for an issue |
-| `generate <file>` | Generate unit/integration/e2e tests |
-| `diagnose <report>` | Analyze test failures, create bug issues |
-| `coverage <report>` | Find coverage gaps, create issues |
-| `scan` | Run custom security scanner |
-| `security` | Analyze CodeQL/Dependabot alerts |
+```typescript
+import {
+  listIssuesTool,
+  createIssueTool,
+  getIssueTool,
+  updateIssueTool,
+  closeIssueTool,
+  searchIssuesTool,
+  addLabelsTool,
+  removeLabelsTool,
+} from 'agentic-triage';
 
-### Planning & Automation
+// Use individual tools
+const tools = { listIssues: listIssuesTool, createIssue: createIssueTool };
+```
 
-| Command | Description |
-|---------|-------------|
-| `sprint` | Weekly sprint planning with AI |
-| `roadmap` | Generate quarterly roadmap |
-| `cascade` | Run full automation cycle |
-| `harness` | Execute test harness scenarios |
-| `configure` | Configure repo settings for triage |
+### 2. MCP Server (For Claude Desktop, Cursor, etc.)
 
-### Release
+```json
+{
+  "mcpServers": {
+    "triage": {
+      "command": "npx",
+      "args": ["agentic-triage", "mcp-server"]
+    }
+  }
+}
+```
 
-| Command | Description |
-|---------|-------------|
-| `release` | Full release cycle (changelog, tag, npm, GitHub) |
+### 3. Direct TypeScript API
 
-## Environment Variables
+```typescript
+import { TriageConnectors } from 'agentic-triage';
 
-```bash
-# Required
-GH_TOKEN=ghp_xxx              # GitHub PAT with repo, workflow, security scopes
-OLLAMA_API_KEY=xxx            # Ollama Cloud API key
+const triage = new TriageConnectors({ provider: 'github' });
 
-# Optional
-OLLAMA_HOST=https://ollama.com  # Ollama API endpoint (default: cloud)
-OLLAMA_MODEL=glm-4.6:cloud      # Model to use (default: glm-4.6:cloud)
-CONTEXT7_API_KEY=xxx            # Context7 API key for documentation lookup
+// Issue operations
+const issues = await triage.issues.list({ status: 'open', priority: 'high' });
+const issue = await triage.issues.create({
+  title: 'Fix login bug',
+  body: 'Users cannot login with SSO',
+  type: 'bug',
+  priority: 'critical',
+});
+await triage.issues.addLabels(issue.id, ['needs-triage', 'auth']);
+await triage.issues.close(issue.id, 'Fixed in PR #123');
+
+// Project operations (coming soon)
+const sprints = await triage.projects.listSprints();
+const currentSprint = await triage.projects.getCurrentSprint();
+
+// Review operations (coming soon)
+const comments = await triage.reviews.getPRComments(144);
+```
+
+## Provider Support
+
+| Provider | Status | Use Case |
+|----------|--------|----------|
+| **GitHub Issues** | ✅ Complete | GitHub-native projects |
+| **Beads** | ✅ Complete | Local-first, AI-native issue tracking |
+| **Jira** | 🔜 Planned | Enterprise projects |
+| **Linear** | 🔜 Planned | Modern team workflows |
+
+### Auto-Detection
+
+The provider is auto-detected based on environment:
+- `.beads/` directory present → Beads provider
+- `GITHUB_REPOSITORY` set or `.git` remote → GitHub provider
+
+### Explicit Configuration
+
+```typescript
+import { TriageConnectors } from 'agentic-triage';
+
+// GitHub
+const github = new TriageConnectors({
+  provider: 'github',
+  github: { owner: 'myorg', repo: 'myrepo' }
+});
+
+// Beads
+const beads = new TriageConnectors({
+  provider: 'beads',
+  beads: { rootDir: '/path/to/project' }
+});
 ```
 
 ## Architecture
 
-agentic-triage uses a **MCP-first architecture** where all external operations go through Model Context Protocol servers. This isolates HTTP/fetch operations to subprocess communication, providing clean separation of concerns.
-
-```text
-agentic-triage/
-├── src/
-│   ├── cli.ts              # CLI entry point (commander.js)
-│   ├── ai.ts               # Vercel AI SDK + Ollama
-│   ├── mcp.ts              # MCP client manager (GitHub, GraphQL, Filesystem, Playwright)
-│   ├── octokit.ts          # GitHub operations via MCP (REST + GraphQL wrappers)
-│   ├── github.ts           # gh CLI helpers (fallback for local operations)
-│   ├── commands/           # Command implementations
-│   │   ├── assess.ts       # Issue assessment with AI
-│   │   ├── review.ts       # PR code review
-│   │   ├── sprint.ts       # Sprint planning
-│   │   └── ...
-│   ├── reporters/          # Test result reporters
-│   │   ├── vitest.ts       # Vitest custom reporter
-│   │   └── playwright.ts   # Playwright custom reporter
-│   └── execution/          # Plan execution engine
-│       ├── planner.ts      # Task planning
-│       └── executor.ts     # Task execution
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      agentic-triage                         │
+│                                                             │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
+│  │ GitHub      │  │ Beads       │  │ Jira/Linear         │ │
+│  │ Provider    │  │ Provider    │  │ (coming soon)       │ │
+│  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘ │
+│         └────────────────┼────────────────────┘            │
+│                          ▼                                  │
+│              ┌───────────────────────┐                     │
+│              │   TriageConnectors    │                     │
+│              │   (Unified API)       │                     │
+│              └───────────┬───────────┘                     │
+│                          │                                  │
+│         ┌────────────────┼────────────────┐                │
+│         ▼                ▼                ▼                │
+│  ┌────────────┐  ┌─────────────┐  ┌────────────┐          │
+│  │ Vercel AI  │  │ MCP Server  │  │ Direct API │          │
+│  │ SDK Tools  │  │             │  │            │          │
+│  └─────┬──────┘  └──────┬──────┘  └─────┬──────┘          │
+│        │                │               │                  │
+└────────┼────────────────┼───────────────┼──────────────────┘
+         │                │               │
+         ▼                ▼               ▼
+    AI Agents        MCP Clients     Applications
+    (agentic-       (Claude,         (Scripts,
+     control)        Cursor)          Services)
 ```
 
-## Test Reporters
+## Consumers
 
-agentic-triage includes custom test reporters that integrate with the triage system:
+- **[agentic-control](https://github.com/jbdevprimary/agentic-control)** - First customer, AI agent fleet orchestration
+- Any Vercel AI SDK application
+- Any MCP-compatible client (Claude Desktop, Cursor, etc.)
+- Direct TypeScript/JavaScript applications
 
-### Vitest Reporter
+## CLI (Development & Testing)
 
-```typescript
-// vitest.config.ts
-export default defineConfig({
-  test: {
-    reporters: ['default', 'agentic-triage/reporters/vitest'],
-  },
-});
+The CLI is primarily for development and testing the primitives:
+
+```bash
+# Test issue assessment
+npx agentic-triage assess 123
+
+# Test PR review
+npx agentic-triage review 144
+
+# Start MCP server
+npx agentic-triage mcp-server
 ```
 
-### Playwright Reporter
+## Environment Variables
 
-```typescript
-// playwright.config.ts
-export default defineConfig({
-  reporter: [['list'], ['agentic-triage/reporters/playwright']],
-});
+```bash
+# For GitHub provider
+GH_TOKEN=ghp_xxx              # GitHub PAT with repo scope
+
+# For Beads provider (optional)
+BEADS_ROOT=/path/to/project   # Beads project root
+
+# For AI operations (when using CLI)
+OLLAMA_API_KEY=xxx            # Ollama Cloud API key
+ANTHROPIC_API_KEY=xxx         # Or Anthropic API key
+```
+
+## Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run tests
+pnpm test
+
+# Run tests with coverage
+pnpm run test:coverage
+
+# Build
+pnpm run build
+
+# Lint
+pnpm run check
 ```
 
 ## Related Projects
 
-- [agentic-control](https://github.com/jbdevprimary/agentic-control) - Core AI agent control framework
-- [agentic-crew](https://github.com/jbdevprimary/agentic-crew) - Multi-agent orchestration (coming soon)
+- [agentic-control](https://github.com/jbdevprimary/agentic-control) - AI agent fleet orchestration (first customer)
+- [Beads](https://github.com/steveyegge/beads) - Local-first, AI-native issue tracking
+- [Vercel AI SDK](https://sdk.vercel.ai) - AI SDK for TypeScript
 
 ## License
 

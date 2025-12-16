@@ -87,17 +87,14 @@ export async function closeAllClients(): Promise<void> {
  * @param variables - Variables for the query
  * @returns The query result data
  */
-export async function executeGraphQL<T = unknown>(
-    query: string,
-    variables?: Record<string, unknown>
-): Promise<T> {
+export async function executeGraphQL<T = unknown>(query: string, variables?: Record<string, unknown>): Promise<T> {
     const client = await getGraphQLMCPClient();
     const tools = await client.tools();
 
     // mcp-graphql exposes 'query-graphql' tool for executing queries
-    const tool = tools['query-graphql'] || tools['graphql'] || tools['execute'] || tools['query'];
+    const tool = tools['query-graphql'] || tools.graphql || tools.execute || tools.query;
     if (!tool) {
-        throw new Error('GraphQL MCP tool not found. Available tools: ' + Object.keys(tools).join(', '));
+        throw new Error(`GraphQL MCP tool not found. Available tools: ${Object.keys(tools).join(', ')}`);
     }
 
     if (typeof tool.execute === 'function') {
@@ -106,10 +103,10 @@ export async function executeGraphQL<T = unknown>(
         if (variables && Object.keys(variables).length > 0) {
             args.variables = JSON.stringify(variables);
         }
-        
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = await (tool.execute as any)(args);
-        
+
         // Handle response format from mcp-graphql (may have content array)
         let data = result;
         if (result.content && Array.isArray(result.content)) {
@@ -118,7 +115,7 @@ export async function executeGraphQL<T = unknown>(
                 data = JSON.parse(textContent.text);
             }
         }
-        
+
         if (data.errors && data.errors.length > 0) {
             throw new Error(`GraphQL error: ${data.errors.map((e: { message: string }) => e.message).join(', ')}`);
         }
@@ -131,10 +128,7 @@ export async function executeGraphQL<T = unknown>(
 /**
  * Call a GitHub MCP tool
  */
-async function callGitHubTool(
-    toolName: string,
-    args: Record<string, unknown>
-): Promise<unknown> {
+async function callGitHubTool(toolName: string, args: Record<string, unknown>): Promise<unknown> {
     const client = await getGitHubMCPClient();
     const tools = await client.tools();
 
@@ -208,9 +202,7 @@ export function getOctokit(): never {
 /**
  * Get issue details via MCP
  */
-export async function getIssue(
-    issueNumber: number
-): Promise<{
+export async function getIssue(issueNumber: number): Promise<{
     number: number;
     title: string;
     body: string;
@@ -240,19 +232,26 @@ export async function getIssue(
 }
 
 /**
- * Create a comment on an issue via MCP
+ * Create a comment on an issue or PR via MCP.
+ *
+ * Notes:
+ * - GitHub treats PR comments as "issue comments" on the PR's issue thread.
  */
-export async function createIssueComment(
-    issueNumber: number,
-    body: string
-): Promise<void> {
+export async function addIssueComment(issueNumber: number, body: string): Promise<void> {
     const { owner, repo } = getRepoContext();
-    await callGitHubTool('create_issue_comment', {
+    await callGitHubTool('add_issue_comment', {
         owner,
         repo,
         issue_number: issueNumber,
         body,
     });
+}
+
+/**
+ * @deprecated Use addIssueComment()
+ */
+export async function createIssueComment(issueNumber: number, body: string): Promise<void> {
+    return addIssueComment(issueNumber, body);
 }
 
 /**
@@ -278,14 +277,29 @@ export async function updateIssue(
 }
 
 /**
+ * Add labels to an issue without clobbering existing labels.
+ */
+export async function addIssueLabels(issueNumber: number, labels: string[]): Promise<void> {
+    if (labels.length === 0) return;
+    const issue = await getIssue(issueNumber);
+    const merged = Array.from(new Set([...issue.labels, ...labels]));
+    await updateIssue(issueNumber, { labels: merged });
+}
+
+/**
+ * Comment on a PR (issue comment thread).
+ */
+export async function commentOnPR(prNumber: number, body: string): Promise<void> {
+    return addIssueComment(prNumber, body);
+}
+
+/**
  * Search issues via MCP (REST API)
- * 
+ *
  * Note: This may not work with GitHub App tokens that have limited scopes.
  * Prefer searchIssuesGraphQL for better compatibility.
  */
-export async function searchIssues(
-    query: string
-): Promise<
+export async function searchIssues(query: string): Promise<
     Array<{
         number: number;
         title: string;
@@ -325,7 +339,7 @@ export async function searchIssues(
 
 /**
  * Search issues via GraphQL (preferred method)
- * 
+ *
  * Works reliably with GitHub App tokens that may have limited REST API access.
  */
 export async function searchIssuesGraphQL(
@@ -342,12 +356,12 @@ export async function searchIssuesGraphQL(
 > {
     const { owner, repo } = getRepoContext();
     const { first = 100, includeBody = false } = options;
-    
+
     // Parse query for state filter
     const isOpen = query.includes('is:open') || query.includes('state:open');
     const isClosed = query.includes('is:closed') || query.includes('state:closed');
     const states = isClosed ? 'CLOSED' : isOpen ? 'OPEN' : null;
-    
+
     // Use proper GraphQL variables instead of string interpolation for robustness
     const gqlQuery = `
         query GetIssues($owner: String!, $repo: String!, $first: Int!, $states: [IssueState!], $includeBody: Boolean!) {
@@ -368,12 +382,12 @@ export async function searchIssuesGraphQL(
             }
         }
     `;
-    
+
     const variables: Record<string, unknown> = { owner, repo, first, includeBody };
     if (states) {
         variables.states = [states];
     }
-    
+
     const result = await executeGraphQL<{
         repository: {
             issues: {
@@ -387,7 +401,7 @@ export async function searchIssuesGraphQL(
             };
         };
     }>(gqlQuery, variables);
-    
+
     return result.repository.issues.nodes.map((issue) => ({
         number: issue.number,
         title: issue.title,
@@ -464,10 +478,7 @@ export async function listCommits(
 /**
  * Get file contents via MCP
  */
-export async function getFileContents(
-    path: string,
-    options: { ref?: string } = {}
-): Promise<string> {
+export async function getFileContents(path: string, options: { ref?: string } = {}): Promise<string> {
     const { owner, repo } = getRepoContext();
     const result = (await callGitHubTool('get_file_contents', {
         owner,
@@ -633,9 +644,7 @@ export async function disableAutoMerge(prNumber: number): Promise<void> {
 /**
  * Get review comments on a PR
  */
-export async function getPRReviewComments(
-    prNumber: number
-): Promise<ReviewComment[]> {
+export async function getPRReviewComments(prNumber: number): Promise<ReviewComment[]> {
     const { owner, repo } = getRepoContext();
     const query = `
         query GetReviewComments($owner: String!, $repo: String!, $number: Int!) {
@@ -768,11 +777,7 @@ export async function getPRReviews(prNumber: number): Promise<
  * @param commentNodeId - The GraphQL node ID of the comment to reply to (from ReviewComment.nodeId)
  * @param body - The reply body
  */
-export async function replyToReviewComment(
-    prNumber: number,
-    commentNodeId: string,
-    body: string
-): Promise<void> {
+export async function replyToReviewComment(prNumber: number, commentNodeId: string, body: string): Promise<void> {
     const pullRequestId = await getPRNodeId(prNumber);
     const mutation = `
         mutation ReplyToComment($pullRequestId: ID!, $body: String!, $inReplyTo: ID!) {
@@ -902,12 +907,7 @@ export async function areAllChecksPassing(ref: string): Promise<{
     const pending = checks.filter((c) => c.status !== 'COMPLETED').length;
 
     const failed = checks
-        .filter(
-            (c) =>
-                c.conclusion === 'FAILURE' ||
-                c.conclusion === 'TIMED_OUT' ||
-                c.conclusion === 'CANCELLED'
-        )
+        .filter((c) => c.conclusion === 'FAILURE' || c.conclusion === 'TIMED_OUT' || c.conclusion === 'CANCELLED')
         .map((c) => c.name);
 
     const passing = failed.length === 0 && pending === 0;
@@ -920,46 +920,25 @@ export async function createCheckRun(
     _headSha: string,
     _options?: {
         status?: 'queued' | 'in_progress' | 'completed';
-        conclusion?:
-            | 'success'
-            | 'failure'
-            | 'neutral'
-            | 'cancelled'
-            | 'skipped'
-            | 'timed_out'
-            | 'action_required';
+        conclusion?: 'success' | 'failure' | 'neutral' | 'cancelled' | 'skipped' | 'timed_out' | 'action_required';
         title?: string;
         summary?: string;
         text?: string;
     }
 ): Promise<number> {
-    throw new Error(
-        'createCheckRun not yet available via MCP. Use runAgenticTask.'
-    );
+    throw new Error('createCheckRun not yet available via MCP. Use runAgenticTask.');
 }
 
-export async function getCodeScanningAlerts(
-    _state?: 'open' | 'dismissed' | 'fixed'
-): Promise<CodeScanningAlert[]> {
-    throw new Error(
-        'getCodeScanningAlerts not yet available via MCP. Use runAgenticTask.'
-    );
+export async function getCodeScanningAlerts(_state?: 'open' | 'dismissed' | 'fixed'): Promise<CodeScanningAlert[]> {
+    throw new Error('getCodeScanningAlerts not yet available via MCP. Use runAgenticTask.');
 }
 
-export async function getPRCodeScanningAlerts(
-    _prNumber: number
-): Promise<CodeScanningAlert[]> {
-    throw new Error(
-        'getPRCodeScanningAlerts not yet available via MCP. Use runAgenticTask.'
-    );
+export async function getPRCodeScanningAlerts(_prNumber: number): Promise<CodeScanningAlert[]> {
+    throw new Error('getPRCodeScanningAlerts not yet available via MCP. Use runAgenticTask.');
 }
 
-export async function getDependabotAlerts(
-    _state?: 'open' | 'dismissed' | 'fixed'
-): Promise<DependabotAlert[]> {
-    throw new Error(
-        'getDependabotAlerts not yet available via MCP. Use runAgenticTask.'
-    );
+export async function getDependabotAlerts(_state?: 'open' | 'dismissed' | 'fixed'): Promise<DependabotAlert[]> {
+    throw new Error('getDependabotAlerts not yet available via MCP. Use runAgenticTask.');
 }
 
 /**
@@ -989,22 +968,15 @@ export async function waitForChecks(
     return { passing: false, failed: [...finalStatus.failed, 'TIMEOUT'] };
 }
 
-export function formatAlertsForAI(
-    codeScanning: CodeScanningAlert[],
-    dependabot: DependabotAlert[]
-): string {
+export function formatAlertsForAI(codeScanning: CodeScanningAlert[], dependabot: DependabotAlert[]): string {
     const lines: string[] = [];
 
     if (codeScanning.length > 0) {
         lines.push('## Code Scanning Alerts');
         for (const alert of codeScanning) {
-            lines.push(
-                `- **${alert.rule.id}** (${alert.rule.severity}): ${alert.rule.description}`
-            );
+            lines.push(`- **${alert.rule.id}** (${alert.rule.severity}): ${alert.rule.description}`);
             if (alert.location) {
-                lines.push(
-                    `  - Location: ${alert.location.path}:${alert.location.startLine}`
-                );
+                lines.push(`  - Location: ${alert.location.path}:${alert.location.startLine}`);
             }
         }
         lines.push('');
@@ -1013,14 +985,10 @@ export function formatAlertsForAI(
     if (dependabot.length > 0) {
         lines.push('## Dependabot Alerts');
         for (const alert of dependabot) {
-            lines.push(
-                `- **${alert.dependency.package}** (${alert.securityVulnerability.severity})`
-            );
+            lines.push(`- **${alert.dependency.package}** (${alert.securityVulnerability.severity})`);
             lines.push(`  - ${alert.securityAdvisory.summary}`);
             if (alert.securityVulnerability.firstPatchedVersion) {
-                lines.push(
-                    `  - Fix: Upgrade to ${alert.securityVulnerability.firstPatchedVersion}`
-                );
+                lines.push(`  - Fix: Upgrade to ${alert.securityVulnerability.firstPatchedVersion}`);
             }
         }
         lines.push('');
@@ -1032,9 +1000,7 @@ export function formatAlertsForAI(
 /**
  * Get review threads on a PR
  */
-export async function getPRReviewThreads(
-    prNumber: number
-): Promise<ReviewThread[]> {
+export async function getPRReviewThreads(prNumber: number): Promise<ReviewThread[]> {
     const { owner, repo } = getRepoContext();
     const query = `
         query GetReviewThreads($owner: String!, $repo: String!, $number: Int!) {

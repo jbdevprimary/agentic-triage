@@ -20,7 +20,7 @@ const CODE_CHARS_PER_TOKEN = 3.5; // Code is denser
 export interface ModelConfig {
     name: string;
     contextWindow: number;
-    inputCostPer1k: number;  // USD per 1k tokens
+    inputCostPer1k: number; // USD per 1k tokens
     outputCostPer1k: number;
 }
 
@@ -28,7 +28,7 @@ export const MODELS: Record<string, ModelConfig> = {
     [DEFAULT_MODEL]: {
         name: 'GLM-4.6',
         contextWindow: 128000,
-        inputCostPer1k: 0.0001,  // Very cheap for local/cloud Ollama
+        inputCostPer1k: 0.0001, // Very cheap for local/cloud Ollama
         outputCostPer1k: 0.0002,
     },
     'llama3.2:latest': {
@@ -78,11 +78,7 @@ export function estimateFileTokens(content: string, filename: string): number {
 /**
  * Estimate cost for a prompt
  */
-export function estimateCost(
-    inputTokens: number,
-    outputTokens: number,
-    model = DEFAULT_MODEL
-): number {
+export function estimateCost(inputTokens: number, outputTokens: number, model = DEFAULT_MODEL): number {
     const config = MODELS[model] || MODELS[DEFAULT_MODEL];
     const inputCost = (inputTokens / 1000) * config.inputCostPer1k;
     const outputCost = (outputTokens / 1000) * config.outputCostPer1k;
@@ -92,11 +88,7 @@ export function estimateCost(
 /**
  * Check if content fits in context window
  */
-export function fitsInContext(
-    tokens: number,
-    model = DEFAULT_MODEL,
-    reserveForOutput = 4096
-): boolean {
+export function fitsInContext(tokens: number, model = DEFAULT_MODEL, reserveForOutput = 4096): boolean {
     const config = MODELS[model] || MODELS[DEFAULT_MODEL];
     return tokens + reserveForOutput <= config.contextWindow;
 }
@@ -164,11 +156,7 @@ export interface ContentChunk {
 /**
  * Split content and provide detailed chunk info
  */
-export function splitWithMetadata(
-    content: string,
-    model = DEFAULT_MODEL,
-    reserveForOutput = 4096
-): SplitResult {
+export function splitWithMetadata(content: string, model = DEFAULT_MODEL, reserveForOutput = 4096): SplitResult {
     const chunks = splitForContext(content, model, reserveForOutput);
     let offset = 0;
     let totalTokens = 0;
@@ -205,7 +193,7 @@ export function groupFilesByDirectory(files: string[]): Map<string, string[]> {
         if (!groups.has(dir)) {
             groups.set(dir, []);
         }
-        groups.get(dir)!.push(file);
+        groups.get(dir)?.push(file);
     }
 
     return groups;
@@ -293,9 +281,10 @@ export function analyzePlanForSplitting(
 
     return {
         shouldSplit: suggestedSplits.length > 1,
-        reason: suggestedSplits.length > 1
-            ? `Plan exceeds context window, recommend ${suggestedSplits.length} separate executions`
-            : undefined,
+        reason:
+            suggestedSplits.length > 1
+                ? `Plan exceeds context window, recommend ${suggestedSplits.length} separate executions`
+                : undefined,
         suggestedSplits,
     };
 }

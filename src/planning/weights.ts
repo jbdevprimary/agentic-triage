@@ -97,33 +97,33 @@ export const DEFAULT_WEIGHT_CONFIG: WeightConfig = {
 
     // Type priorities
     typeWeights: {
-        'security': 500,
-        'bug': 200,
-        'performance': 150,
-        'feature': 100,
-        'enhancement': 80,
+        security: 500,
+        bug: 200,
+        performance: 150,
+        feature: 100,
+        enhancement: 80,
         'tech-debt': 60,
-        'testing': 50,
-        'documentation': 30,
-        'infrastructure': 40,
-        'unknown': 10,
+        testing: 50,
+        documentation: 30,
+        infrastructure: 40,
+        unknown: 10,
     },
 
     // Priority labels
     priorityWeights: {
-        'critical': 1000,
-        'high': 200,
-        'medium': 50,
-        'low': 10,
+        critical: 1000,
+        high: 200,
+        medium: 50,
+        low: 10,
     },
 
     // Complexity - favor quick wins
     complexityWeights: {
-        'trivial': 100,
-        'small': 50,
-        'medium': 0,
-        'large': -50,
-        'epic': -100,
+        trivial: 100,
+        small: 50,
+        medium: 0,
+        large: -50,
+        epic: -100,
     },
 
     // Business value
@@ -137,10 +137,7 @@ export const DEFAULT_WEIGHT_CONFIG: WeightConfig = {
 /**
  * Calculate the priority weight for an issue
  */
-export function calculateWeight(
-    issue: IssueMetrics,
-    config: WeightConfig = DEFAULT_WEIGHT_CONFIG
-): number {
+export function calculateWeight(issue: IssueMetrics, config: WeightConfig = DEFAULT_WEIGHT_CONFIG): number {
     let weight = 0;
 
     // 1. Engagement score
@@ -149,15 +146,11 @@ export function calculateWeight(
     weight += issue.participants * config.participantWeight;
 
     // 2. Age/urgency score
-    const ageInDays = Math.floor(
-        (Date.now() - new Date(issue.createdAt).getTime()) / 86400000
-    );
+    const ageInDays = Math.floor((Date.now() - new Date(issue.createdAt).getTime()) / 86400000);
     weight += ageInDays * config.ageWeight;
 
     // Stale bonus (hasn't been touched in 30+ days)
-    const daysSinceUpdate = Math.floor(
-        (Date.now() - new Date(issue.updatedAt).getTime()) / 86400000
-    );
+    const daysSinceUpdate = Math.floor((Date.now() - new Date(issue.updatedAt).getTime()) / 86400000);
     if (daysSinceUpdate > 30) {
         weight += config.staleBonus;
     }
@@ -241,16 +234,16 @@ export function sortByWeight(issues: Array<IssueMetrics & { weight: number }>): 
  */
 export function groupByType(issues: IssueMetrics[]): Record<IssueType, IssueMetrics[]> {
     const result: Record<IssueType, IssueMetrics[]> = {
-        'bug': [],
-        'feature': [],
-        'enhancement': [],
+        bug: [],
+        feature: [],
+        enhancement: [],
         'tech-debt': [],
-        'documentation': [],
-        'security': [],
-        'performance': [],
-        'testing': [],
-        'infrastructure': [],
-        'unknown': [],
+        documentation: [],
+        security: [],
+        performance: [],
+        testing: [],
+        infrastructure: [],
+        unknown: [],
     };
 
     for (const issue of issues) {

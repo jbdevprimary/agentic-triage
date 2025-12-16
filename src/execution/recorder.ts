@@ -9,9 +9,9 @@
  * Uses nock under the hood for interception.
  */
 
+import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as crypto from 'node:crypto';
 
 export interface Recording {
     id: string;
@@ -55,12 +55,7 @@ export interface RecorderOptions {
     redactHeaders?: string[];
 }
 
-const DEFAULT_REDACT_HEADERS = [
-    'authorization',
-    'x-api-key',
-    'cookie',
-    'set-cookie',
-];
+const DEFAULT_REDACT_HEADERS = ['authorization', 'x-api-key', 'cookie', 'set-cookie'];
 
 /**
  * HTTP Recorder for VCR-style testing
@@ -68,7 +63,7 @@ const DEFAULT_REDACT_HEADERS = [
 export class HttpRecorder {
     private options: RecorderOptions;
     private recording: Recording | null = null;
-    private playbackIndex = 0;
+    private playedInteractionIds = new Set<string>();
     private originalFetch: typeof fetch | null = null;
 
     constructor(options: RecorderOptions) {
@@ -113,7 +108,7 @@ export class HttpRecorder {
         }
 
         this.recording = null;
-        this.playbackIndex = 0;
+        this.playedInteractionIds.clear();
     }
 
     /**
@@ -159,25 +154,25 @@ export class HttpRecorder {
      */
     private interceptFetch(): void {
         this.originalFetch = global.fetch;
-        const self = this;
 
-        global.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+        global.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
             const request = new Request(input, init);
             const url = new URL(request.url);
 
             // Check if this host should be intercepted
-            const shouldIntercept = self.options.hosts.some(
-                (host) => url.hostname.includes(host) || host === '*'
-            );
+            const shouldIntercept = this.options.hosts.some((host) => url.hostname.includes(host) || host === '*');
 
             if (!shouldIntercept) {
-                return self.originalFetch!(input, init);
+                if (!this.originalFetch) {
+                    throw new Error('Original fetch not available');
+                }
+                return this.originalFetch(input, init);
             }
 
-            if (self.options.mode === 'playback') {
-                return self.playback(request);
+            if (this.options.mode === 'playback') {
+                return this.playback(request);
             } else {
-                return self.record(request);
+                return this.record(request);
             }
         };
     }
@@ -199,13 +194,17 @@ export class HttpRecorder {
         const startTime = Date.now();
 
         // Make the actual request
-        const response = await this.originalFetch!(request.clone());
+        if (!this.originalFetch) {
+            throw new Error('Original fetch not available');
+        }
+        const response = await this.originalFetch(request.clone());
 
         // Clone response to read body
         const responseClone = response.clone();
         const responseBody = await this.parseResponseBody(responseClone);
 
         // Record the interaction
+        const { body: requestBody, bodyHash } = await this.parseRequestBodyWithHash(request);
         const interaction: RecordedInteraction = {
             id: crypto.randomUUID(),
             timestamp: new Date().toISOString(),
@@ -213,7 +212,8 @@ export class HttpRecorder {
                 method: request.method,
                 url: request.url,
                 headers: this.redactHeaders(Object.fromEntries(request.headers)),
-                body: await this.parseRequestBody(request),
+                body: requestBody,
+                bodyHash,
             },
             response: {
                 status: response.status,
@@ -232,19 +232,25 @@ export class HttpRecorder {
      * Playback a recorded response
      */
     private async playback(request: Request): Promise<Response> {
-        if (!this.recording || this.playbackIndex >= this.recording.interactions.length) {
-            throw new Error(
-                `No recorded interaction for request: ${request.method} ${request.url}`
-            );
+        if (!this.recording) {
+            throw new Error(`No recorded interaction for request: ${request.method} ${request.url}`);
         }
 
-        const interaction = this.recording.interactions[this.playbackIndex];
-        this.playbackIndex++;
+        const expected = this.findMatchingInteraction(request);
+        if (!expected) {
+            if (this.options.updateOnMismatch) {
+                // Fall back to live request and (optionally) update in-memory recording
+                console.warn(`No recorded interaction, making live request: ${request.url}`);
+                return this.record(request);
+            }
+            throw new Error(`No recorded interaction for request: ${request.method} ${request.url}`);
+        }
+        this.playedInteractionIds.add(expected.id);
 
         // Verify request matches (loosely)
         if (
-            interaction.request.method !== request.method ||
-            !request.url.includes(new URL(interaction.request.url).pathname)
+            expected.request.method !== request.method ||
+            !request.url.includes(new URL(expected.request.url).pathname)
         ) {
             if (this.options.updateOnMismatch) {
                 // Fall back to live request and update recording
@@ -252,31 +258,36 @@ export class HttpRecorder {
                 return this.record(request);
             }
             throw new Error(
-                `Request mismatch: expected ${interaction.request.method} ${interaction.request.url}, got ${request.method} ${request.url}`
+                `Request mismatch: expected ${expected.request.method} ${expected.request.url}, got ${request.method} ${request.url}`
             );
         }
 
         // Simulate network delay (reduced)
-        await new Promise((resolve) => setTimeout(resolve, Math.min(interaction.duration, 100)));
+        await new Promise((resolve) => setTimeout(resolve, Math.min(expected.duration, 100)));
 
         // Return recorded response
-        return new Response(JSON.stringify(interaction.response.body), {
-            status: interaction.response.status,
-            headers: interaction.response.headers,
-        });
+        return this.buildResponse(expected.response);
     }
 
     /**
-     * Parse request body
+     * Parse request body and compute a stable hash for matching.
      */
-    private async parseRequestBody(request: Request): Promise<unknown> {
+    private async parseRequestBodyWithHash(request: Request): Promise<{ body: unknown; bodyHash?: string }> {
         try {
             const clone = request.clone();
             const text = await clone.text();
-            if (!text) return undefined;
-            return JSON.parse(text);
+            if (!text) return { body: undefined, bodyHash: undefined };
+            const body = (() => {
+                try {
+                    return JSON.parse(text);
+                } catch {
+                    return text;
+                }
+            })();
+            const bodyHash = crypto.createHash('sha256').update(text).digest('hex');
+            return { body, bodyHash };
         } catch {
-            return undefined;
+            return { body: undefined, bodyHash: undefined };
         }
     }
 
@@ -305,15 +316,60 @@ export class HttpRecorder {
         }
         return redacted;
     }
+
+    /**
+     * Find a matching interaction for playback.
+     *
+     * Order-independent: safe for parallel flows as long as requests are distinguishable.
+     */
+    private findMatchingInteraction(request: Request): RecordedInteraction | undefined {
+        if (!this.recording) return undefined;
+
+        const url = new URL(request.url);
+        const method = request.method;
+
+        // We cannot (cheaply) read request body without consuming it here, so prefer matching by method+path.
+        // If the recorded interaction has a bodyHash, it will only be used when we can compute it (not in playback).
+        // This still greatly improves over strict sequence ordering for typical API usage.
+        const candidates = this.recording.interactions.filter((i) => {
+            if (this.playedInteractionIds.has(i.id)) return false;
+            if (i.request.method !== method) return false;
+            const recordedUrl = new URL(i.request.url);
+            return recordedUrl.hostname === url.hostname && recordedUrl.pathname === url.pathname;
+        });
+
+        if (candidates.length === 1) return candidates[0];
+        if (candidates.length === 0) return undefined;
+
+        // Fall back to first unplayed candidate (stable via recording order)
+        return candidates[0];
+    }
+
+    private buildResponse(recorded: RecordedResponse): Response {
+        const contentType = recorded.headers['content-type'] || recorded.headers['Content-Type'] || 'application/json';
+
+        let body: string | undefined;
+        if (recorded.body === undefined) {
+            body = undefined;
+        } else if (typeof recorded.body === 'string') {
+            body = recorded.body;
+        } else if (contentType.includes('application/json')) {
+            body = JSON.stringify(recorded.body);
+        } else {
+            body = String(recorded.body);
+        }
+
+        return new Response(body, {
+            status: recorded.status,
+            headers: recorded.headers,
+        });
+    }
 }
 
 /**
  * Create a recorder instance with default settings
  */
-export function createRecorder(
-    fixturesDir: string,
-    mode: RecorderOptions['mode'] = 'passthrough'
-): HttpRecorder {
+export function createRecorder(fixturesDir: string, mode: RecorderOptions['mode'] = 'passthrough'): HttpRecorder {
     return new HttpRecorder({
         fixturesDir,
         mode,

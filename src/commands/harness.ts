@@ -7,18 +7,11 @@
  * - VCR recording/playback
  */
 
-import pc from 'picocolors';
 import * as path from 'node:path';
-import {
-    createTestHarness,
-    runTriageTests,
-    type TestHarnessOptions,
-} from '../execution/test-harness.js';
-import {
-    FIXTURE_SCENARIOS,
-    type FixtureScenario,
-} from '../execution/fixtures.js';
+import pc from 'picocolors';
+import { FIXTURE_SCENARIOS, type FixtureScenario } from '../execution/fixtures.js';
 import { cleanupAllSandboxes } from '../execution/github-sandbox.js';
+import { createTestHarness, runTriageTests, type TestHarnessOptions } from '../execution/test-harness.js';
 
 export interface HarnessCommandOptions {
     /** Run specific scenarios */

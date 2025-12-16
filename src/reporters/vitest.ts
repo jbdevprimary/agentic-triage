@@ -15,11 +15,11 @@
  * ```
  */
 
-import type { File, Reporter, Task, TaskResultPack, Vitest } from 'vitest';
-import { writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import type { TestReport, TestFile, TestResult, TestError, CoverageData, FileCoverage } from '../test-results.js';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import type { File, Reporter, Task, Vitest } from 'vitest';
+import type { CoverageData, TestError, TestFile, TestReport, TestResult } from '../test-results.js';
 
 export interface StrataReporterOptions {
     /** Output file path */
@@ -48,7 +48,7 @@ export class StrataReporter implements Reporter {
         this.startTime = Date.now();
     }
 
-    async onFinished(files?: File[], errors?: unknown[]): Promise<void> {
+    async onFinished(files?: File[], _errors?: unknown[]): Promise<void> {
         if (!files) return;
 
         const report = this.buildReport(files);
@@ -99,9 +99,7 @@ export class StrataReporter implements Reporter {
             path: file.filepath,
             tests,
             duration: file.result?.duration ?? 0,
-            setupError: file.result?.errors?.[0]
-                ? this.processError(file.result.errors[0])
-                : undefined,
+            setupError: file.result?.errors?.[0] ? this.processError(file.result.errors[0]) : undefined,
         };
     }
 
@@ -120,9 +118,7 @@ export class StrataReporter implements Reporter {
                     line: task.location?.line,
                     status: this.mapStatus(task.result?.state),
                     duration: task.result?.duration ?? 0,
-                    error: task.result?.errors?.[0]
-                        ? this.processError(task.result.errors[0])
-                        : undefined,
+                    error: task.result?.errors?.[0] ? this.processError(task.result.errors[0]) : undefined,
                     retry: task.result?.retryCount,
                 });
             } else if (task.type === 'suite' && task.tasks) {

@@ -70,18 +70,18 @@ export interface PlanStep {
 }
 
 export type StepType =
-    | 'ai-generate'      // AI text generation
-    | 'ai-tool-call'     // AI with tool use
-    | 'file-read'        // Read file
-    | 'file-write'       // Write file
-    | 'file-delete'      // Delete file
-    | 'git-operation'    // Git command
-    | 'github-api'       // GitHub API call
-    | 'shell-command'    // Shell execution
-    | 'http-request'     // External HTTP
-    | 'wait'             // Wait/delay
-    | 'condition'        // Conditional branch
-    | 'aggregate';       // Combine results
+    | 'ai-generate' // AI text generation
+    | 'ai-tool-call' // AI with tool use
+    | 'file-read' // Read file
+    | 'file-write' // Write file
+    | 'file-delete' // Delete file
+    | 'git-operation' // Git command
+    | 'github-api' // GitHub API call
+    | 'shell-command' // Shell execution
+    | 'http-request' // External HTTP
+    | 'wait' // Wait/delay
+    | 'condition' // Conditional branch
+    | 'aggregate'; // Combine results
 
 export type StepConfig =
     | AIGenerateConfig
@@ -169,7 +169,7 @@ export interface WaitConfig {
 export interface ConditionConfig {
     type: 'condition';
     expression: string;
-    ifTrue: string[];  // Step IDs to execute if true
+    ifTrue: string[]; // Step IDs to execute if true
     ifFalse: string[]; // Step IDs to execute if false
 }
 

@@ -8,17 +8,12 @@
  * - Tracks coverage trends
  */
 
-import pc from 'picocolors';
-import { readFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { generate, generateWithTools } from '../ai.js';
+import { existsSync, readFileSync } from 'node:fs';
+import pc from 'picocolors';
+import { generateWithTools } from '../ai.js';
 import { createInlineFilesystemClient, type MCPClient } from '../mcp.js';
-import {
-    parseTestReport,
-    getLowCoverageFiles,
-    getUncoveredFunctions,
-    type TestReport,
-} from '../test-results.js';
+import { getLowCoverageFiles, getUncoveredFunctions, parseTestReport } from '../test-results.js';
 
 const SYSTEM_PROMPT = `You are a test coverage expert for Strata, a procedural 3D graphics library for React Three Fiber.
 
@@ -102,7 +97,7 @@ export async function coverage(options: CoverageOptions): Promise<void> {
     console.log(pc.yellow(`Found ${lowCoverage.length} file(s) below ${threshold}% coverage`));
 
     // Summary
-    console.log('\n' + pc.bold('Coverage Summary:'));
+    console.log(`\n${pc.bold('Coverage Summary:')}`);
     for (const file of lowCoverage.slice(0, 10)) {
         const color = file.lines.percentage < 50 ? pc.red : pc.yellow;
         console.log(color(`  ${file.path}: ${file.lines.percentage.toFixed(1)}%`));
@@ -124,7 +119,10 @@ export async function coverage(options: CoverageOptions): Promise<void> {
             // Build analysis prompt
             const fileList = lowCoverage
                 .slice(0, 5)
-                .map((f) => `- ${f.path}: ${f.lines.percentage.toFixed(1)}% (uncovered lines: ${f.uncoveredLines.slice(0, 10).join(', ')}${f.uncoveredLines.length > 10 ? '...' : ''})`)
+                .map(
+                    (f) =>
+                        `- ${f.path}: ${f.lines.percentage.toFixed(1)}% (uncovered lines: ${f.uncoveredLines.slice(0, 10).join(', ')}${f.uncoveredLines.length > 10 ? '...' : ''})`
+                )
                 .join('\n');
 
             const functionList = uncoveredFunctions
@@ -153,9 +151,8 @@ For each file:
             });
 
             analysis = result.text;
-            console.log('\n' + pc.green('Coverage Analysis:'));
+            console.log(`\n${pc.green('Coverage Analysis:')}`);
             console.log(analysis);
-
         } finally {
             if (fsClient) await fsClient.close();
         }
@@ -204,7 +201,7 @@ _Auto-created by @strata/triage_`;
                 stdio: 'pipe',
             });
             console.log(pc.green(`Created issue: ${title}`));
-        } catch (err) {
+        } catch (_err) {
             console.log(pc.yellow(`Could not create issue: ${title}`));
         }
     }
@@ -215,7 +212,10 @@ _Auto-created by @strata/triage_`;
 
 The following files are below the ${threshold}% coverage threshold:
 
-${moderateFiles.slice(0, 20).map((f) => `- \`${f.path}\`: ${f.lines.percentage.toFixed(1)}%`).join('\n')}
+${moderateFiles
+    .slice(0, 20)
+    .map((f) => `- \`${f.path}\`: ${f.lines.percentage.toFixed(1)}%`)
+    .join('\n')}
 ${moderateFiles.length > 20 ? `\n... and ${moderateFiles.length - 20} more files` : ''}
 
 ---
@@ -227,7 +227,7 @@ _Auto-created by @strata/triage_`;
                 stdio: 'pipe',
             });
             console.log(pc.green(`Created issue: ${title}`));
-        } catch (err) {
+        } catch (_err) {
             console.log(pc.yellow(`Could not create issue: ${title}`));
         }
     }

@@ -13,11 +13,11 @@
  * 6. Run tests to verify
  */
 
-import pc from 'picocolors';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { dirname, basename, join, relative } from 'node:path';
-import { generate as aiGenerate, generateWithTools } from '../ai.js';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
+import pc from 'picocolors';
+import { generateWithTools } from '../ai.js';
 import { createInlineFilesystemClient, type MCPClient } from '../mcp.js';
 
 const SYSTEM_PROMPT = `You are an expert TypeScript/React test engineer. Generate comprehensive unit tests following these principles:
@@ -117,15 +117,7 @@ interface ExportInfo {
 }
 
 export async function generateTests(options: GenerateOptions): Promise<void> {
-    const {
-        source,
-        output,
-        type = 'unit',
-        dryRun = false,
-        verbose = false,
-        run = false,
-        overwrite = false,
-    } = options;
+    const { source, output, type = 'unit', dryRun = false, verbose = false, run = false, overwrite = false } = options;
 
     console.log(pc.blue(`🧪 Generating ${type} tests for: ${source}`));
 
@@ -166,7 +158,7 @@ export async function generateTests(options: GenerateOptions): Promise<void> {
 
     if (verbose) {
         console.log(pc.dim('\nGeneration prompt:'));
-        console.log(pc.dim(prompt.slice(0, 500) + '...'));
+        console.log(pc.dim(`${prompt.slice(0, 500)}...`));
     }
 
     console.log(pc.blue('Generating tests with AI...'));
@@ -235,7 +227,6 @@ export async function generateTests(options: GenerateOptions): Promise<void> {
         }
 
         console.log(pc.green('\nTest generation complete!'));
-
     } finally {
         if (fsClient) await fsClient.close();
     }
@@ -253,7 +244,8 @@ function analyzeSource(filePath: string): SourceAnalysis {
     }
 
     // Detect React patterns
-    const isReactComponent = /import\s+.*React/.test(content) ||
+    const isReactComponent =
+        /import\s+.*React/.test(content) ||
         /from\s+['"]react['"]/.test(content) ||
         /export\s+(?:default\s+)?function\s+\w+\s*\([^)]*\)\s*(?::\s*(?:JSX\.Element|React\.|FC))/.test(content) ||
         /<[A-Z]/.test(content);
@@ -264,9 +256,7 @@ function analyzeSource(filePath: string): SourceAnalysis {
 
     // Extract exports
     // Named exports
-    const namedExportMatches = content.matchAll(
-        /export\s+(?:async\s+)?(function|const|class|interface|type)\s+(\w+)/g
-    );
+    const namedExportMatches = content.matchAll(/export\s+(?:async\s+)?(function|const|class|interface|type)\s+(\w+)/g);
     for (const match of namedExportMatches) {
         const [, kind, name] = match;
         let type: ExportInfo['type'] = kind as ExportInfo['type'];
@@ -308,7 +298,7 @@ function analyzeSource(filePath: string): SourceAnalysis {
     };
 }
 
-function getTestFilePath(sourcePath: string, outputDir: string | undefined, type: string): string {
+function getTestFilePath(sourcePath: string, outputDir: string | undefined, _type: string): string {
     const fileName = basename(sourcePath, '.ts').replace('.tsx', '');
     const extension = sourcePath.endsWith('.tsx') ? '.tsx' : '.ts';
 

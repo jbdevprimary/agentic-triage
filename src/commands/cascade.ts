@@ -8,12 +8,7 @@
  */
 
 import pc from 'picocolors';
-import {
-    runCascade,
-    type CascadeConfig,
-    type CascadeStep,
-    DEFAULT_CASCADE_CONFIG,
-} from '../planning/cascade.js';
+import { type CascadeConfig, type CascadeStep, DEFAULT_CASCADE_CONFIG, runCascade } from '../planning/cascade.js';
 
 export interface CascadeCommandOptions {
     /** Steps to include (comma-separated) */
@@ -30,16 +25,7 @@ export interface CascadeCommandOptions {
     verbose?: boolean;
 }
 
-const VALID_STEPS: CascadeStep[] = [
-    'plan',
-    'develop',
-    'test',
-    'diagnose',
-    'fix',
-    'verify',
-    'review',
-    'merge',
-];
+const VALID_STEPS: CascadeStep[] = ['plan', 'develop', 'test', 'diagnose', 'fix', 'verify', 'review', 'merge'];
 
 export async function cascade(options: CascadeCommandOptions = {}): Promise<void> {
     console.log(pc.bold(pc.blue('🌊 Cascade Triage')));

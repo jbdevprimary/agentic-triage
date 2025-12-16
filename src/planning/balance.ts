@@ -8,7 +8,7 @@
  * - Testing (quality)
  */
 
-import { IssueMetrics, IssueType, groupByType } from './weights.js';
+import { groupByType, type IssueMetrics, type IssueType } from './weights.js';
 
 export interface SprintCapacity {
     /** Total story points available */
@@ -31,10 +31,10 @@ export interface BalanceConfig {
 }
 
 export interface CategoryAllocation {
-    features: number;      // New features + enhancements
-    bugs: number;          // Bug fixes
-    techDebt: number;      // Refactoring, cleanup
-    quality: number;       // Testing, documentation
+    features: number; // New features + enhancements
+    bugs: number; // Bug fixes
+    techDebt: number; // Refactoring, cleanup
+    quality: number; // Testing, documentation
     infrastructure: number; // CI/CD, tooling
 }
 
@@ -118,11 +118,7 @@ export function analyzeBacklogHealth(issues: IssueMetrics[]): BacklogHealth {
     const staleRatio = stale / openIssues.length;
     const ageScore = Math.max(0, 100 - averageAge / 2); // Lose points as avg age increases
 
-    const score = Math.round(
-        ageScore * 0.4 +
-        (1 - unrepliedRatio) * 100 * 0.3 +
-        (1 - staleRatio) * 100 * 0.3
-    );
+    const score = Math.round(ageScore * 0.4 + (1 - unrepliedRatio) * 100 * 0.3 + (1 - staleRatio) * 100 * 0.3);
 
     return {
         totalOpen: openIssues.length,
@@ -163,46 +159,22 @@ export function calculateOptimalAllocation(
     // If bugs are piling up, increase bug allocation
     const bugRatio = health.byCategory.bugs / total;
     if (bugRatio > 0.3) {
-        allocation.bugs = Math.min(
-            config.maximumAllocation.bugs,
-            allocation.bugs + 10
-        );
-        allocation.features = Math.max(
-            config.minimumAllocation.features,
-            allocation.features - 10
-        );
+        allocation.bugs = Math.min(config.maximumAllocation.bugs, allocation.bugs + 10);
+        allocation.features = Math.max(config.minimumAllocation.features, allocation.features - 10);
     }
 
     // If health score is low (lots of stale/unreplied), reduce feature work
     if (health.score < 50) {
-        allocation.bugs = Math.min(
-            config.maximumAllocation.bugs,
-            allocation.bugs + 5
-        );
-        allocation.techDebt = Math.min(
-            config.maximumAllocation.techDebt,
-            allocation.techDebt + 5
-        );
-        allocation.features = Math.max(
-            config.minimumAllocation.features,
-            allocation.features - 10
-        );
+        allocation.bugs = Math.min(config.maximumAllocation.bugs, allocation.bugs + 5);
+        allocation.techDebt = Math.min(config.maximumAllocation.techDebt, allocation.techDebt + 5);
+        allocation.features = Math.max(config.minimumAllocation.features, allocation.features - 10);
     }
 
     // If backlog is very healthy, can focus more on features
     if (health.score > 80 && health.totalOpen < 20) {
-        allocation.features = Math.min(
-            config.maximumAllocation.features,
-            allocation.features + 10
-        );
-        allocation.bugs = Math.max(
-            config.minimumAllocation.bugs,
-            allocation.bugs - 5
-        );
-        allocation.techDebt = Math.max(
-            config.minimumAllocation.techDebt,
-            allocation.techDebt - 5
-        );
+        allocation.features = Math.min(config.maximumAllocation.features, allocation.features + 10);
+        allocation.bugs = Math.max(config.minimumAllocation.bugs, allocation.bugs - 5);
+        allocation.techDebt = Math.max(config.minimumAllocation.techDebt, allocation.techDebt - 5);
     }
 
     // Normalize to 100%
@@ -259,11 +231,11 @@ export function selectSprintIssues(
     };
 
     const pointsAvailable: CategoryAllocation = {
-        features: Math.round(capacity.totalPoints * allocation.features / 100),
-        bugs: Math.round(capacity.totalPoints * allocation.bugs / 100),
-        techDebt: Math.round(capacity.totalPoints * allocation.techDebt / 100),
-        quality: Math.round(capacity.totalPoints * allocation.quality / 100),
-        infrastructure: Math.round(capacity.totalPoints * allocation.infrastructure / 100),
+        features: Math.round((capacity.totalPoints * allocation.features) / 100),
+        bugs: Math.round((capacity.totalPoints * allocation.bugs) / 100),
+        techDebt: Math.round((capacity.totalPoints * allocation.techDebt) / 100),
+        quality: Math.round((capacity.totalPoints * allocation.quality) / 100),
+        infrastructure: Math.round((capacity.totalPoints * allocation.infrastructure) / 100),
     };
 
     // Sort by weight descending
@@ -291,11 +263,17 @@ export function selectSprintIssues(
  */
 function estimatePoints(complexity?: string): number {
     switch (complexity) {
-        case 'trivial': return 1;
-        case 'small': return 2;
-        case 'medium': return 5;
-        case 'large': return 8;
-        case 'epic': return 13;
-        default: return 3; // Default medium
+        case 'trivial':
+            return 1;
+        case 'small':
+            return 2;
+        case 'medium':
+            return 5;
+        case 'large':
+            return 8;
+        case 'epic':
+            return 13;
+        default:
+            return 3; // Default medium
     }
 }

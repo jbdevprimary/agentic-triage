@@ -14,26 +14,11 @@
  */
 
 import pc from 'picocolors';
-import { generate } from '../ai.js';
-import { getIssue, getPullRequest } from '../github.js';
-import {
-    type ExecutionPlan,
-    type PlanStep,
-    type PlanContext,
-    type PlanTrigger,
-    type StepConfig,
-    createPlan,
-    addStep,
-    serializePlan,
-} from './plan.js';
-import {
-    estimateTokens,
-    estimateStepTokens,
-    estimateCost,
-    analyzePlanForSplitting,
-} from './tokenizer.js';
+import { getIssue, getPullRequest } from '../octokit.js';
+import { addStep, createPlan, type ExecutionPlan, type PlanContext, type PlanTrigger } from './plan.js';
+import { analyzePlanForSplitting, estimateCost, estimateTokens } from './tokenizer.js';
 
-const PLANNING_PROMPT = `You are a planning assistant that creates execution plans for development tasks.
+const _PLANNING_PROMPT = `You are a planning assistant that creates execution plans for development tasks.
 
 Given a task description, create a detailed plan with specific steps.
 
@@ -69,11 +54,8 @@ export interface PlannerOptions {
 /**
  * Create a plan for assessing an issue
  */
-export async function planAssess(
-    issueNumber: number,
-    options: PlannerOptions
-): Promise<ExecutionPlan> {
-    const issue = getIssue(issueNumber);
+export async function planAssess(issueNumber: number, options: PlannerOptions): Promise<ExecutionPlan> {
+    const issue = await getIssue(issueNumber);
 
     const trigger: PlanTrigger = {
         type: 'issue',
@@ -144,11 +126,8 @@ export async function planAssess(
 /**
  * Create a plan for developing an issue
  */
-export async function planDevelop(
-    issueNumber: number,
-    options: PlannerOptions
-): Promise<ExecutionPlan> {
-    const issue = getIssue(issueNumber);
+export async function planDevelop(issueNumber: number, options: PlannerOptions): Promise<ExecutionPlan> {
+    const issue = await getIssue(issueNumber);
 
     const trigger: PlanTrigger = {
         type: 'issue',
@@ -257,11 +236,8 @@ export async function planDevelop(
 /**
  * Create a plan for reviewing a PR
  */
-export async function planReview(
-    prNumber: number,
-    options: PlannerOptions
-): Promise<ExecutionPlan> {
-    const pr = getPullRequest(prNumber);
+export async function planReview(prNumber: number, options: PlannerOptions): Promise<ExecutionPlan> {
+    const pr = await getPullRequest(prNumber);
 
     const trigger: PlanTrigger = {
         type: 'pr',
@@ -330,10 +306,7 @@ export async function planReview(
 /**
  * Create a plan for test generation
  */
-export async function planTestGeneration(
-    sourceFile: string,
-    options: PlannerOptions
-): Promise<ExecutionPlan> {
+export async function planTestGeneration(sourceFile: string, options: PlannerOptions): Promise<ExecutionPlan> {
     const trigger: PlanTrigger = {
         type: 'manual',
         source: 'generate-command',
@@ -472,7 +445,7 @@ export function validatePlan(plan: ExecutionPlan): void {
     const warnings: Array<{ stepId?: string; code: string; message: string }> = [];
 
     // Check for circular dependencies
-    const visited = new Set<string>();
+    const _visited = new Set<string>();
     const checkCircular = (stepId: string, path: string[]) => {
         if (path.includes(stepId)) {
             errors.push({

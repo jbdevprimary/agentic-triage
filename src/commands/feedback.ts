@@ -11,12 +11,7 @@
 
 import pc from 'picocolors';
 import { generate } from '../ai.js';
-import {
-    getPRReviewThreads,
-    resolveReviewThread,
-    markPRReadyForReview,
-    type ReviewThread,
-} from '../octokit.js';
+import { getPRReviewThreads, markPRReadyForReview, type ReviewThread, resolveReviewThread } from '../octokit.js';
 
 const SYSTEM_PROMPT = `You are a code reviewer for Strata, a procedural 3D graphics library for React Three Fiber.
 
@@ -72,15 +67,11 @@ export async function handleFeedback(
     }
 
     // Group threads by type
-    const codeScanning = unresolvedThreads.filter((t) =>
-        t.comments[0]?.author === 'github-advanced-security'
-    );
+    const codeScanning = unresolvedThreads.filter((t) => t.comments[0]?.author === 'github-advanced-security');
     const botReviews = unresolvedThreads.filter((t) =>
         ['amazon-q-developer', 'cursor', 'gemini-code-assist'].includes(t.comments[0]?.author ?? '')
     );
-    const humanReviews = unresolvedThreads.filter((t) =>
-        !codeScanning.includes(t) && !botReviews.includes(t)
-    );
+    const humanReviews = unresolvedThreads.filter((t) => !codeScanning.includes(t) && !botReviews.includes(t));
 
     console.log(pc.dim(`  - Code scanning: ${codeScanning.length}`));
     console.log(pc.dim(`  - Bot reviews: ${botReviews.length}`));
@@ -183,17 +174,19 @@ async function assessThreads(threads: ReviewThread[], verbose: boolean): Promise
     const assessments: FeedbackAssessment[] = [];
 
     // Build a prompt with all threads for batch assessment
-    const threadSummaries = threads.map((t, i) => {
-        const firstComment = t.comments[0];
-        const summary = firstComment?.body.split('\n')[0] ?? 'No comment';
-        return `
+    const threadSummaries = threads
+        .map((t, i) => {
+            const firstComment = t.comments[0];
+            const _summary = firstComment?.body.split('\n')[0] ?? 'No comment';
+            return `
 Thread ${i + 1}:
 - Path: ${t.path}
 - Author: ${firstComment?.author ?? 'unknown'}
 - Outdated: ${t.isOutdated}
 - Comment: ${firstComment?.body.slice(0, 500)}${(firstComment?.body.length ?? 0) > 500 ? '...' : ''}
 `;
-    }).join('\n---\n');
+        })
+        .join('\n---\n');
 
     const prompt = `Assess these PR review threads. For each thread, determine if it's valid, already fixed, a hallucination, or cannot be fixed automatically.
 
@@ -240,7 +233,7 @@ Respond in JSON format:
                 }
             }
         }
-    } catch (error) {
+    } catch (_error) {
         console.log(pc.yellow('Could not parse AI assessment, falling back to manual review'));
 
         // Fallback: mark code scanning as cannot_fix, others as need review

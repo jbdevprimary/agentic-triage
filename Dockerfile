@@ -51,11 +51,13 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
 RUN npm install -g pnpm
 
 # Create non-root user for security
-RUN useradd -m -u 1000 -s /bin/bash triage
+# Use UID 1001 to avoid conflicts with existing users in base image
+RUN useradd -m -u 1001 -s /bin/bash triage
 USER triage
 WORKDIR /home/triage
 
 # Setup pnpm for global installs
+ENV SHELL=/bin/bash
 RUN pnpm setup
 ENV PNPM_HOME="/home/triage/.local/share/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"

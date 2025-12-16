@@ -29,7 +29,7 @@
  *
  * @example SDK Usage
  * ```typescript
- * import { assess, generate, getOctokit } from '@strata/triage';
+ * import { assess, generate } from '@strata/triage';
  *
  * // Assess an issue programmatically
  * await assess(123, { verbose: true });
@@ -64,14 +64,14 @@
  * ```
  */
 export {
-    getProvider,
-    getModel,
+    type AIConfig,
+    CLOUD_HOST,
+    DEFAULT_MODEL,
+    type GenerateOptions as AIGenerateOptions,
     generate as aiGenerate,
     generateWithTools,
-    DEFAULT_MODEL,
-    CLOUD_HOST,
-    type AIConfig,
-    type GenerateOptions as AIGenerateOptions,
+    getModel,
+    getProvider,
 } from './ai.js';
 
 // ============================================================================
@@ -111,34 +111,34 @@ export {
  * ```
  */
 export {
-    // Filesystem MCP
-    createFilesystemClient,
-    createInlineFilesystemClient,
-    getFilesystemTools,
-    FILESYSTEM_TOOLS,
-    // GitHub MCP
-    createGitHubClient,
-    getGitHubTools,
-    // Context7 MCP (prevents hallucinations!)
-    createContext7Client,
-    getContext7Tools,
-    CONTEXT7_TOOLS,
-    // Vite React MCP
-    createViteReactClient,
-    getViteReactTools,
-    VITE_REACT_TOOLS,
-    // Unified MCP access
-    initializeMCPClients,
-    getAllTools,
-    closeMCPClients,
-    // Agentic task execution
-    runAgenticTask,
-    // Types
-    type MCPClient,
-    type MCPClients,
-    type MCPClientOptions,
     type AgenticTaskOptions,
     type AgenticTaskResult,
+    CONTEXT7_TOOLS,
+    closeMCPClients,
+    // Context7 MCP (prevents hallucinations!)
+    createContext7Client,
+    // Filesystem MCP
+    createFilesystemClient,
+    // GitHub MCP
+    createGitHubClient,
+    createInlineFilesystemClient,
+    // Vite React MCP
+    createViteReactClient,
+    FILESYSTEM_TOOLS,
+    getAllTools,
+    getContext7Tools,
+    getFilesystemTools,
+    getGitHubTools,
+    getViteReactTools,
+    // Unified MCP access
+    initializeMCPClients,
+    // Types
+    type MCPClient,
+    type MCPClientOptions,
+    type MCPClients,
+    // Agentic task execution
+    runAgenticTask,
+    VITE_REACT_TOOLS,
 } from './mcp.js';
 
 /**
@@ -155,88 +155,50 @@ export {
 export { createPlaywrightClient, getPlaywrightTools, PLAYWRIGHT_TOOLS, type PlaywrightOptions } from './playwright.js';
 
 // ============================================================================
-// GitHub API (Octokit)
+// GitHub (MCP)
 // ============================================================================
 
 /**
- * Advanced GitHub API operations via Octokit REST and GraphQL
+ * GitHub operations via MCP (no `gh`, no Octokit).
  *
- * Provides:
- * - PR state management (draft/ready, auto-merge)
- * - Review operations (comments, replies, submissions)
- * - Check run monitoring and creation
- * - Security alerts (CodeQL, Dependabot)
- *
- * @example
- * ```typescript
- * import { getOctokit, enableAutoMerge, waitForChecks } from '@strata/triage';
- *
- * const octokit = getOctokit();
- * await enableAutoMerge(144, 'SQUASH');
- * await waitForChecks(144);
- * ```
+ * This package intentionally uses MCP for GitHub access so that automation
+ * runs through tool calls and can be recorded/replayed deterministically.
  */
 export {
-    getOctokit,
-    getRepoContext,
+    // Comments / labels
+    addIssueComment,
+    addIssueLabels,
+    areAllChecksPassing,
+    type CheckRun,
+    type CodeScanningAlert,
+    commentOnPR,
     // PR Management
     convertPRToDraft,
-    markPRReadyForReview,
-    enableAutoMerge,
+    createCheckRun,
+    createIssueComment,
+    type DependabotAlert,
     disableAutoMerge,
+    enableAutoMerge,
+    formatAlertsForAI,
+    // Checks
+    getCheckRuns,
+    // Security
+    getCodeScanningAlerts,
+    getDependabotAlerts,
+    // Core issue/PR access
+    getIssue,
+    getPRCodeScanningAlerts,
     // Reviews
     getPRReviewComments,
     getPRReviews,
+    getPullRequest,
+    getRepoContext,
+    markPRReadyForReview,
+    type ReviewComment,
     replyToReviewComment,
     submitPRReview,
-    // Checks
-    getCheckRuns,
-    areAllChecksPassing,
-    createCheckRun,
     waitForChecks,
-    // Security
-    getCodeScanningAlerts,
-    getPRCodeScanningAlerts,
-    getDependabotAlerts,
-    formatAlertsForAI,
-    type ReviewComment,
-    type CheckRun,
-    type CodeScanningAlert,
-    type DependabotAlert,
 } from './octokit.js';
-
-// ============================================================================
-// GitHub CLI Helpers
-// ============================================================================
-
-/**
- * GitHub CLI (`gh`) helpers for common operations
- *
- * Uses `execFileSync` for safe command execution without shell injection.
- *
- * @example
- * ```typescript
- * import { getIssue, createPR, commentOnPR } from '@strata/triage';
- *
- * const issue = getIssue(123);
- * const prUrl = createPR('fix/issue-123', 'Fix bug', 'Closes #123');
- * commentOnPR(144, 'LGTM!');
- * ```
- */
-export {
-    getIssue,
-    getPullRequest,
-    addLabels,
-    removeLabels,
-    commentOnIssue,
-    commentOnPR,
-    createBranch,
-    pushBranch,
-    createPR,
-    getDefaultBranch,
-    type Issue,
-    type PullRequest,
-} from './github.js';
 
 // ============================================================================
 // CLI Commands
@@ -267,36 +229,36 @@ export {
  * ```
  */
 export {
-    assess,
-    review,
-    autoLabel,
-    develop,
-    test,
-    plan,
-    verify,
-    diagnose,
-    coverage,
-    generateTests,
-    security,
-    automerge,
-    sprint,
-    roadmap,
-    cascade,
     type AssessOptions,
-    type ReviewOptions,
-    type LabelOptions,
-    type DevelopOptions,
-    type TestOptions,
-    type PlanOptions,
-    type VerifyOptions,
-    type DiagnoseOptions,
-    type CoverageOptions,
-    type GenerateOptions,
-    type SecurityOptions,
     type AutomergeOptions,
-    type SprintCommandOptions,
-    type RoadmapCommandOptions,
+    assess,
+    autoLabel,
+    automerge,
     type CascadeCommandOptions,
+    type CoverageOptions,
+    cascade,
+    coverage,
+    type DevelopOptions,
+    type DiagnoseOptions,
+    develop,
+    diagnose,
+    type GenerateOptions,
+    generateTests,
+    type LabelOptions,
+    type PlanOptions,
+    plan,
+    type ReviewOptions,
+    type RoadmapCommandOptions,
+    review,
+    roadmap,
+    type SecurityOptions,
+    type SprintCommandOptions,
+    security,
+    sprint,
+    type TestOptions,
+    test,
+    type VerifyOptions,
+    verify,
 } from './commands/index.js';
 
 // ============================================================================
@@ -365,16 +327,166 @@ export * from './execution/index.js';
  * ```
  */
 export {
-    parseTestReport,
-    getFailedTests,
-    getTestsByFile,
-    getLowCoverageFiles,
-    getUncoveredFunctions,
-    formatForAI,
-    type TestReport,
-    type TestResult,
-    type TestFile,
-    type TestError,
     type CoverageData,
     type FileCoverage,
+    formatForAI,
+    getFailedTests,
+    getLowCoverageFiles,
+    getTestsByFile,
+    getUncoveredFunctions,
+    parseTestReport,
+    type TestError,
+    type TestFile,
+    type TestReport,
+    type TestResult,
 } from './test-results.js';
+
+// ============================================================================
+// Triage Providers (Low-level)
+// ============================================================================
+
+/**
+ * Multi-provider abstraction for issue tracking systems
+ *
+ * Similar to how agentic-control has multiple AI providers (Anthropic, OpenAI, etc.),
+ * agentic-triage has multiple triage/issue providers:
+ *
+ * | Provider | Use Case |
+ * |----------|----------|
+ * | **GitHub** | GitHub Issues - standard GitHub workflow |
+ * | **Beads** | Local-first, AI-native issue tracking with dependency graphs |
+ * | **Jira** | Enterprise issue tracking (coming soon) |
+ * | **Linear** | Modern issue tracking (coming soon) |
+ *
+ * @example
+ * ```typescript
+ * import { createProvider, createBestProvider } from 'agentic-triage';
+ *
+ * // Create a specific provider
+ * const github = createProvider({ type: 'github', repo: 'owner/repo' });
+ * const beads = createProvider({ type: 'beads', workingDir: process.cwd() });
+ *
+ * // Auto-detect best provider
+ * const provider = await createBestProvider();
+ *
+ * // Unified interface
+ * const issues = await provider.listIssues({ status: 'open' });
+ * const ready = await provider.getReadyWork({ limit: 10 });
+ * await provider.createIssue({ title: 'Bug fix', type: 'bug', priority: 'high' });
+ * ```
+ */
+export {
+    BeadsProvider,
+    type BeadsProviderConfig,
+    type CreateIssueOptions,
+    clearProviders,
+    createBeadsProvider,
+    createBestProvider,
+    createGitHubProvider,
+    // Factory functions
+    createProvider,
+    type DependencyType,
+    detectProviders,
+    // Individual providers
+    GitHubProvider,
+    type GitHubProviderConfig,
+    getAllProviders,
+    getCombinedStats,
+    getProvider as getTriageProvider,
+    type IssueDependency,
+    type IssuePriority,
+    type IssueStatus,
+    type IssueType,
+    isBeadsInitialized,
+    isBeadsInstalled,
+    type JiraProviderConfig,
+    type LinearProviderConfig,
+    type ListIssuesOptions,
+    // Utility functions
+    normalizePriority,
+    normalizeStatus,
+    normalizeType,
+    type ProviderConfig,
+    type ProviderStats,
+    priorityToNumber,
+    type ReadyWork,
+    // Provider registration
+    registerProvider,
+    // Utilities
+    syncAllProviders,
+    type TriageIssue,
+    // Types
+    type TriageProvider,
+    type UpdateIssueOptions,
+} from './providers/index.js';
+
+// ============================================================================
+// Triage Unified API & Tools (vendor-connectors pattern)
+// ============================================================================
+
+/**
+ * Unified Triage API following the vendor-connectors pattern
+ *
+ * Provides TWO interfaces (like vendor-connectors):
+ * 1. **Direct TypeScript API** - TriageConnectors class
+ * 2. **Vercel AI SDK Tools** - for use with agentic-control agents
+ *
+ * @example Direct API (TriageConnectors)
+ * ```typescript
+ * import { TriageConnectors } from '@strata/triage';
+ *
+ * const triage = new TriageConnectors();
+ *
+ * // Issue operations
+ * const issues = await triage.issues.list({ status: 'open' });
+ * await triage.issues.create({ title: 'Fix bug', type: 'bug' });
+ * await triage.issues.close('123', 'Fixed in PR #456');
+ *
+ * // Get ready work
+ * const ready = await triage.issues.getReadyWork({ limit: 5 });
+ * ```
+ *
+ * @example Vercel AI SDK Tools (for agentic-control)
+ * ```typescript
+ * import { getTriageTools } from '@strata/triage';
+ * import { generateText } from 'ai';
+ * import { anthropic } from '@ai-sdk/anthropic';
+ *
+ * const result = await generateText({
+ *   model: anthropic('claude-sonnet-4-20250514'),
+ *   tools: getTriageTools(),
+ *   prompt: 'Create a high-priority bug for the login timeout issue',
+ * });
+ * ```
+ */
+export {
+    // Individual tools for custom compositions
+    addLabelsTool,
+    closeIssueTool,
+    createIssueTool,
+    // Direct API
+    createTriageConnectors,
+    getCurrentSprintTool,
+    getIssueStatsTool,
+    getIssueTool,
+    // Vercel AI SDK Tools - main entry points
+    getIssueTools,
+    getPRCommentsTool,
+    getProjectTools,
+    getReadyWorkTool,
+    getReviewTools,
+    getTriageTools,
+    // Tool definitions for custom integrations
+    ISSUE_TOOL_DEFINITIONS,
+    listIssuesTool,
+    listSprintsTool,
+    PROJECT_TOOL_DEFINITIONS,
+    REVIEW_TOOL_DEFINITIONS,
+    removeLabelsTool,
+    searchIssuesTool,
+    // Utility for custom connector injection
+    setTriageConnectors,
+    TriageConnectors,
+    type TriageConnectorsConfig,
+    updateIssueTool,
+} from './triage/index.js';

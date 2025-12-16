@@ -3,8 +3,9 @@
  */
 
 import pc from 'picocolors';
-import { getPullRequest, getRepoInfo } from '../github.js';
+import { getPullRequest } from '../github.js';
 import { runAgenticTask } from '../mcp.js';
+import { getRepoContext } from '../octokit.js';
 
 const SYSTEM_PROMPT = `You are a senior code reviewer for Strata, a React Three Fiber procedural graphics library.
 
@@ -79,10 +80,10 @@ export async function review(prNumber: number, options: ReviewOptions = {}): Pro
     console.log(pc.blue(`🔍 Reviewing PR #${prNumber}...`));
 
     // Get repo info - needed for GitHub MCP
-    const { owner, repo } = getRepoInfo();
-    
+    const { owner, repo } = getRepoContext();
+
     // Get PR data
-    const pr = getPullRequest(prNumber);
+    const pr = await getPullRequest(prNumber);
 
     if (verbose) {
         console.log(pc.dim(`Repo: ${owner}/${repo}`));
@@ -160,13 +161,15 @@ ${truncated ? '\n⚠️ Diff truncated. Use read_file to see full file contents.
                 github: true,
             },
             maxSteps,
-            onToolCall: verbose ? (toolName, args) => {
-                console.log(pc.dim(`  → ${toolName}(${JSON.stringify(args).slice(0, 100)}...)`));
-            } : undefined,
+            onToolCall: verbose
+                ? (toolName, args) => {
+                      console.log(pc.dim(`  → ${toolName}(${JSON.stringify(args).slice(0, 100)}...)`));
+                  }
+                : undefined,
         });
 
-        console.log('\n' + pc.green('═══ Review Complete ═══'));
-        
+        console.log(`\n${pc.green('═══ Review Complete ═══')}`);
+
         if (verbose) {
             console.log(pc.dim(`Steps: ${result.steps.length}`));
             console.log(pc.dim(`Tool calls: ${result.toolCallCount}`));
@@ -175,7 +178,7 @@ ${truncated ? '\n⚠️ Diff truncated. Use read_file to see full file contents.
         // Check if comments were posted
         const commentCalls = result.steps.flatMap((step: unknown) => {
             const s = step as { toolCalls?: Array<{ toolName: string }> };
-            return s.toolCalls?.filter(tc => tc.toolName === 'add_issue_comment') || [];
+            return s.toolCalls?.filter((tc) => tc.toolName === 'add_issue_comment') || [];
         });
 
         if (commentCalls.length > 0) {
@@ -187,7 +190,6 @@ ${truncated ? '\n⚠️ Diff truncated. Use read_file to see full file contents.
                 console.log(result.text.slice(0, 500) + (result.text.length > 500 ? '...' : ''));
             }
         }
-
     } catch (error) {
         console.error(pc.red('\n❌ Review failed:'));
         if (error instanceof Error) {

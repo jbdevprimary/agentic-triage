@@ -9,17 +9,18 @@
 
 import pc from 'picocolors';
 import {
-    enableAutoMerge,
-    disableAutoMerge,
-    markPRReadyForReview,
-    convertPRToDraft,
-    getCheckRuns,
     areAllChecksPassing,
-    waitForChecks,
+    commentOnPR,
+    convertPRToDraft,
+    disableAutoMerge,
+    enableAutoMerge,
+    getCheckRuns,
     getPRReviews,
+    getPullRequest,
+    markPRReadyForReview,
     submitPRReview,
+    waitForChecks,
 } from '../octokit.js';
-import { getPullRequest, commentOnPR } from '../github.js';
 
 export interface AutomergeOptions {
     /** Action to perform */
@@ -35,17 +36,11 @@ export interface AutomergeOptions {
 }
 
 export async function automerge(prNumber: number, options: AutomergeOptions): Promise<void> {
-    const {
-        action,
-        mergeMethod = 'SQUASH',
-        approve = false,
-        dryRun = false,
-        verbose = false,
-    } = options;
+    const { action, mergeMethod = 'SQUASH', approve = false, dryRun = false, verbose = false } = options;
 
     console.log(pc.blue(`🔀 PR #${prNumber}: ${action}`));
 
-    const pr = getPullRequest(prNumber);
+    const pr = await getPullRequest(prNumber);
 
     if (verbose) {
         console.log(pc.dim(`Title: ${pr.title}`));
@@ -66,7 +61,7 @@ export async function automerge(prNumber: number, options: AutomergeOptions): Pr
                 await submitPRReview(prNumber, 'APPROVE', 'Auto-approved by @strata/triage');
             }
 
-            commentOnPR(prNumber, `✅ Auto-merge enabled (${mergeMethod})\n\n_Managed by @strata/triage_`);
+            await commentOnPR(prNumber, `✅ Auto-merge enabled (${mergeMethod})\n\n_Managed by @strata/triage_`);
             console.log(pc.green('✅ Auto-merge enabled'));
             break;
         }
@@ -118,7 +113,7 @@ export async function automerge(prNumber: number, options: AutomergeOptions): Pr
             const checks = await getCheckRuns(headRef);
             const { passing, pending, failed } = await areAllChecksPassing(headRef);
 
-            console.log('\n' + pc.bold('Check Status:'));
+            console.log(`\n${pc.bold('Check Status:')}`);
             console.log(`  Total: ${checks.length}`);
             console.log(`  Pending: ${pending}`);
             console.log(`  Failed: ${failed.length}`);
@@ -137,10 +132,10 @@ export async function automerge(prNumber: number, options: AutomergeOptions): Pr
             // Show reviews
             const reviews = await getPRReviews(prNumber);
             if (reviews.length > 0) {
-                console.log('\n' + pc.bold('Reviews:'));
+                console.log(`\n${pc.bold('Reviews:')}`);
                 for (const review of reviews) {
-                    const icon = review.state === 'APPROVED' ? '✅' :
-                        review.state === 'CHANGES_REQUESTED' ? '❌' : '💬';
+                    const icon =
+                        review.state === 'APPROVED' ? '✅' : review.state === 'CHANGES_REQUESTED' ? '❌' : '💬';
                     console.log(`  ${icon} ${review.user}: ${review.state}`);
                 }
             }

@@ -8,10 +8,10 @@
  * - Potential XSS in React components
  */
 
-import pc from 'picocolors';
 import { readFileSync, writeFileSync } from 'node:fs';
+import { relative } from 'node:path';
 import { globSync } from 'glob';
-import { basename, relative } from 'node:path';
+import pc from 'picocolors';
 
 export interface ScanResult {
     file: string;
@@ -40,7 +40,7 @@ const SCAN_RULES: ScanRule[] = [
         severity: 'error',
         pattern: /execSync\s*\(\s*[`"']/,
         filePattern: /\.tsx?$/,
-        validate: (match, line) => {
+        validate: (_match, line) => {
             // Check if it's not using execFileSync
             return !line.includes('execFileSync');
         },
@@ -60,7 +60,7 @@ const SCAN_RULES: ScanRule[] = [
         severity: 'error',
         pattern: /\beval\s*\(/,
         filePattern: /\.tsx?$/,
-        validate: (match, line) => {
+        validate: (_match, line) => {
             // Ignore comments
             return !line.trim().startsWith('//') && !line.trim().startsWith('*');
         },
@@ -96,9 +96,14 @@ const SCAN_RULES: ScanRule[] = [
         severity: 'note',
         pattern: /\[.*\]\s*=/,
         filePattern: /\.tsx?$/,
-        validate: (match, line, context) => {
+        validate: (match, line, _context) => {
             // Ignore array index access (number in brackets)
-            if (/\[\d+\]/.test(match[0]) || /\[i\]/.test(match[0]) || /\[j\]/.test(match[0]) || /\[k\]/.test(match[0])) {
+            if (
+                /\[\d+\]/.test(match[0]) ||
+                /\[i\]/.test(match[0]) ||
+                /\[j\]/.test(match[0]) ||
+                /\[k\]/.test(match[0])
+            ) {
                 return false;
             }
             // Only flag if it's assignment to dynamic key from user input
@@ -112,12 +117,14 @@ const SCAN_RULES: ScanRule[] = [
         severity: 'error',
         pattern: /(?:password|secret|api[_-]?key|token)\s*[:=]\s*['"][^'"]{8,}['"]/i,
         filePattern: /\.tsx?$/,
-        validate: (match, line) => {
+        validate: (_match, line) => {
             // Ignore type definitions and examples
-            return !line.includes('process.env') &&
-                   !line.includes('interface') &&
-                   !line.includes('type ') &&
-                   !line.includes('// example');
+            return (
+                !line.includes('process.env') &&
+                !line.includes('interface') &&
+                !line.includes('type ') &&
+                !line.includes('// example')
+            );
         },
     },
     {
@@ -127,13 +134,15 @@ const SCAN_RULES: ScanRule[] = [
         severity: 'note',
         pattern: /Math\.random\s*\(/,
         filePattern: /\.tsx?$/,
-        validate: (match, line, context) => {
+        validate: (_match, _line, context) => {
             // Only flag in security-sensitive contexts
             const contextStr = context.join('\n').toLowerCase();
-            return contextStr.includes('token') ||
-                   contextStr.includes('key') ||
-                   contextStr.includes('secret') ||
-                   contextStr.includes('password');
+            return (
+                contextStr.includes('token') ||
+                contextStr.includes('key') ||
+                contextStr.includes('secret') ||
+                contextStr.includes('password')
+            );
         },
     },
     {
@@ -158,25 +167,21 @@ export interface ScanOptions {
 }
 
 export async function scan(options: ScanOptions = {}): Promise<ScanResult[]> {
-    const {
-        directories = ['src', 'internal'],
-        sarifOutput,
-        verbose = false,
-    } = options;
+    const { directories = ['src', 'internal'], sarifOutput, verbose: _verbose = false } = options;
 
     console.log(pc.blue('🔍 Scanning for security issues...'));
 
     const results: ScanResult[] = [];
 
     // Find all TypeScript files
-    const patterns = directories.map(dir => `${dir}/**/*.{ts,tsx}`);
+    const patterns = directories.map((dir) => `${dir}/**/*.{ts,tsx}`);
     const files = globSync(patterns, {
         ignore: [
             '**/node_modules/**',
             '**/dist/**',
             '**/*.test.ts',
             '**/*.test.tsx',
-            '**/scan.ts',  // Don't scan the scanner itself (patterns match their own definitions)
+            '**/scan.ts', // Don't scan the scanner itself (patterns match their own definitions)
         ],
     });
 
@@ -234,8 +239,7 @@ export async function scan(options: ScanOptions = {}): Promise<ScanResult[]> {
         for (const [file, fileResults] of byFile) {
             console.log(pc.bold(relative(process.cwd(), file)));
             for (const result of fileResults) {
-                const color = result.severity === 'error' ? pc.red :
-                             result.severity === 'warning' ? pc.yellow : pc.dim;
+                const color = result.severity === 'error' ? pc.red : result.severity === 'warning' ? pc.yellow : pc.dim;
                 console.log(color(`  ${result.line}:${result.column} ${result.rule}`));
                 console.log(pc.dim(`    ${result.message}`));
             }
@@ -243,9 +247,9 @@ export async function scan(options: ScanOptions = {}): Promise<ScanResult[]> {
         }
 
         // Summary
-        const errors = results.filter(r => r.severity === 'error').length;
-        const warnings = results.filter(r => r.severity === 'warning').length;
-        const notes = results.filter(r => r.severity === 'note').length;
+        const errors = results.filter((r) => r.severity === 'error').length;
+        const warnings = results.filter((r) => r.severity === 'warning').length;
+        const notes = results.filter((r) => r.severity === 'note').length;
 
         console.log(pc.bold('Summary:'));
         if (errors > 0) console.log(pc.red(`  ❌ ${errors} error(s)`));
@@ -265,41 +269,45 @@ export async function scan(options: ScanOptions = {}): Promise<ScanResult[]> {
 }
 
 function generateScanSarif(results: ScanResult[]): object {
-    const rules = SCAN_RULES.map(rule => ({
+    const rules = SCAN_RULES.map((rule) => ({
         id: rule.id,
         name: rule.name,
         shortDescription: { text: rule.description },
         defaultConfiguration: { level: rule.severity },
     }));
 
-    const sarifResults = results.map(result => ({
+    const sarifResults = results.map((result) => ({
         ruleId: result.rule,
         level: result.severity,
         message: { text: result.message },
-        locations: [{
-            physicalLocation: {
-                artifactLocation: { uri: relative(process.cwd(), result.file) },
-                region: {
-                    startLine: result.line,
-                    startColumn: result.column + 1,
+        locations: [
+            {
+                physicalLocation: {
+                    artifactLocation: { uri: relative(process.cwd(), result.file) },
+                    region: {
+                        startLine: result.line,
+                        startColumn: result.column + 1,
+                    },
                 },
             },
-        }],
+        ],
     }));
 
     return {
         $schema: 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
         version: '2.1.0',
-        runs: [{
-            tool: {
-                driver: {
-                    name: 'strata-scanner',
-                    version: '1.0.0',
-                    informationUri: 'https://github.com/jbcom/strata',
-                    rules,
+        runs: [
+            {
+                tool: {
+                    driver: {
+                        name: 'strata-scanner',
+                        version: '1.0.0',
+                        informationUri: 'https://github.com/jbcom/strata',
+                        rules,
+                    },
                 },
+                results: sarifResults,
             },
-            results: sarifResults,
-        }],
+        ],
     };
 }

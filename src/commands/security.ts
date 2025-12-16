@@ -10,14 +10,14 @@
 import pc from 'picocolors';
 import { generate } from '../ai.js';
 import {
-    getCodeScanningAlerts,
-    getPRCodeScanningAlerts,
-    getDependabotAlerts,
-    formatAlertsForAI,
     type CodeScanningAlert,
+    commentOnPR,
     type DependabotAlert,
+    formatAlertsForAI,
+    getCodeScanningAlerts,
+    getDependabotAlerts,
+    getPRCodeScanningAlerts,
 } from '../octokit.js';
-import { commentOnPR, commentOnIssue } from '../github.js';
 
 const SYSTEM_PROMPT = `You are a security expert analyzing code for vulnerabilities in Strata, a procedural 3D graphics library for React Three Fiber.
 
@@ -97,13 +97,7 @@ interface SarifReport {
 }
 
 export async function security(options: SecurityOptions = {}): Promise<void> {
-    const {
-        pr,
-        dependabot = true,
-        codeScanning = true,
-        dryRun = false,
-        verbose = false,
-    } = options;
+    const { pr, dependabot = true, codeScanning = true, dryRun = false, verbose = false } = options;
 
     console.log(pc.blue('🔒 Analyzing security alerts...'));
 
@@ -114,9 +108,7 @@ export async function security(options: SecurityOptions = {}): Promise<void> {
     if (codeScanning) {
         console.log(pc.dim('Fetching code scanning alerts...'));
         try {
-            codeScanningAlerts = pr
-                ? await getPRCodeScanningAlerts(pr)
-                : await getCodeScanningAlerts('open');
+            codeScanningAlerts = pr ? await getPRCodeScanningAlerts(pr) : await getCodeScanningAlerts('open');
             console.log(pc.dim(`Found ${codeScanningAlerts.length} code scanning alert(s)`));
         } catch (error) {
             console.log(pc.yellow('Code scanning not available or not enabled'));
@@ -149,7 +141,7 @@ export async function security(options: SecurityOptions = {}): Promise<void> {
     const alertsText = formatAlertsForAI(codeScanningAlerts, dependabotAlerts);
 
     // Summary
-    console.log('\n' + pc.bold('Security Alert Summary:'));
+    console.log(`\n${pc.bold('Security Alert Summary:')}`);
 
     if (codeScanningAlerts.length > 0) {
         const bySeverity = groupBy(codeScanningAlerts, (a) => a.rule.severity);
@@ -182,7 +174,7 @@ Provide:
 
     const analysis = await generate(prompt, { systemPrompt: SYSTEM_PROMPT });
 
-    console.log('\n' + pc.green('Security Analysis:'));
+    console.log(`\n${pc.green('Security Analysis:')}`);
     console.log(analysis);
 
     if (dryRun) {
@@ -203,7 +195,7 @@ ${analysis}
 ---
 _Analyzed by @strata/triage_`;
 
-        commentOnPR(pr, comment);
+        await commentOnPR(pr, comment);
         console.log(pc.dim(`Posted security analysis to PR #${pr}`));
     }
 
@@ -240,9 +232,9 @@ function generateSarifReport(
     // Convert code scanning alerts to SARIF
     for (const alert of codeScanningAlerts) {
         const ruleId = `strata/${alert.rule.id}`;
-        
+
         // Add rule if not exists
-        if (!rules.find(r => r.id === ruleId)) {
+        if (!rules.find((r) => r.id === ruleId)) {
             rules.push({
                 id: ruleId,
                 name: alert.rule.name || alert.rule.id,
@@ -257,23 +249,27 @@ function generateSarifReport(
             ruleId,
             level: severityToLevel(alert.rule.severity) as 'error' | 'warning' | 'note',
             message: { text: alert.rule.description },
-            locations: alert.location ? [{
-                physicalLocation: {
-                    artifactLocation: { uri: alert.location.path },
-                    region: {
-                        startLine: alert.location.startLine,
-                        endLine: alert.location.endLine,
-                    },
-                },
-            }] : [],
+            locations: alert.location
+                ? [
+                      {
+                          physicalLocation: {
+                              artifactLocation: { uri: alert.location.path },
+                              region: {
+                                  startLine: alert.location.startLine,
+                                  endLine: alert.location.endLine,
+                              },
+                          },
+                      },
+                  ]
+                : [],
         });
     }
 
     // Convert dependabot alerts to SARIF
     for (const alert of dependabotAlerts) {
         const ruleId = `strata/dependency/${alert.dependency.package}`;
-        
-        if (!rules.find(r => r.id === ruleId)) {
+
+        if (!rules.find((r) => r.id === ruleId)) {
             rules.push({
                 id: ruleId,
                 name: `Vulnerable dependency: ${alert.dependency.package}`,
@@ -290,11 +286,13 @@ function generateSarifReport(
             message: {
                 text: `${alert.securityAdvisory.summary}. Fix: upgrade to ${alert.securityVulnerability.firstPatchedVersion || 'latest'}`,
             },
-            locations: [{
-                physicalLocation: {
-                    artifactLocation: { uri: 'package.json' },
+            locations: [
+                {
+                    physicalLocation: {
+                        artifactLocation: { uri: 'package.json' },
+                    },
                 },
-            }],
+            ],
         });
     }
 
@@ -311,28 +309,32 @@ function generateSarifReport(
             ruleId: 'strata/ai-analysis',
             level: 'note',
             message: { text: aiAnalysis.slice(0, 2000) }, // SARIF has size limits
-            locations: [{
-                physicalLocation: {
-                    artifactLocation: { uri: 'SECURITY.md' },
+            locations: [
+                {
+                    physicalLocation: {
+                        artifactLocation: { uri: 'SECURITY.md' },
+                    },
                 },
-            }],
+            ],
         });
     }
 
     return {
         $schema: 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
         version: '2.1.0',
-        runs: [{
-            tool: {
-                driver: {
-                    name: 'strata-triage',
-                    version: '1.0.0',
-                    informationUri: 'https://github.com/jbcom/strata',
-                    rules,
+        runs: [
+            {
+                tool: {
+                    driver: {
+                        name: 'strata-triage',
+                        version: '1.0.0',
+                        informationUri: 'https://github.com/jbcom/strata',
+                        rules,
+                    },
                 },
+                results,
             },
-            results,
-        }],
+        ],
     };
 }
 

@@ -9,27 +9,19 @@
  * 5. Spawn sub-tasks via triage
  */
 
-import pc from 'picocolors';
 import { execFileSync } from 'node:child_process';
+import pc from 'picocolors';
 import { generate } from '../ai.js';
-import {
-    IssueMetrics,
-    calculateWeight,
-    detectIssueType,
-    detectPriority,
-    sortByWeight,
-    DEFAULT_WEIGHT_CONFIG,
-} from './weights.js';
+import { getRepoContext, searchIssues } from '../octokit.js';
 import {
     analyzeBacklogHealth,
-    calculateOptimalAllocation,
-    selectSprintIssues,
-    DEFAULT_BALANCE,
-    type SprintCapacity,
     type BacklogHealth,
     type CategoryAllocation,
+    calculateOptimalAllocation,
+    type SprintCapacity,
+    selectSprintIssues,
 } from './balance.js';
-import { getRepoContext, searchIssues, updateIssue } from '../octokit.js';
+import { calculateWeight, detectIssueType, detectPriority, type IssueMetrics, sortByWeight } from './weights.js';
 
 const SYSTEM_PROMPT = `You are a technical project manager planning sprints for Strata, a procedural 3D graphics library for React Three Fiber.
 
@@ -168,14 +160,14 @@ export async function planSprint(options: SprintOptions = {}): Promise<SprintPla
     };
 
     // Print plan
-    console.log('\n' + pc.bold('Sprint Plan:'));
+    console.log(`\n${pc.bold('Sprint Plan:')}`);
     console.log(pc.dim(`Duration: ${startDate} to ${endDate}`));
     console.log(pc.dim(`Capacity: ${capacity} points`));
-    console.log('\n' + pc.bold('Goals:'));
+    console.log(`\n${pc.bold('Goals:')}`);
     for (const goal of goals) {
         console.log(`  • ${goal}`);
     }
-    console.log('\n' + pc.bold('Selected Issues:'));
+    console.log(`\n${pc.bold('Selected Issues:')}`);
     for (const issue of selectedIssues.slice(0, 10)) {
         console.log(`  #${issue.number} (${issue.weight}) ${issue.title.slice(0, 50)}`);
     }
@@ -208,9 +200,7 @@ export async function planSprint(options: SprintOptions = {}): Promise<SprintPla
     // 9. Trigger development for top issues
     if (triggerDevelopment) {
         console.log(pc.blue('\nTriggering development for top issues...'));
-        const toTrigger = selectedIssues
-            .filter((i) => !i.isPR && i.type !== 'documentation')
-            .slice(0, maxTrigger);
+        const toTrigger = selectedIssues.filter((i) => !i.isPR && i.type !== 'documentation').slice(0, maxTrigger);
 
         for (const issue of toTrigger) {
             console.log(pc.dim(`  Triggering #${issue.number}...`));
@@ -267,9 +257,10 @@ async function generateSprintGoals(
     health: BacklogHealth,
     allocation: CategoryAllocation
 ): Promise<string[]> {
-    const issuesSummary = issues.slice(0, 10).map(
-        (i) => `#${i.number} (${i.type}): ${i.title}`
-    ).join('\n');
+    const issuesSummary = issues
+        .slice(0, 10)
+        .map((i) => `#${i.number} (${i.type}): ${i.title}`)
+        .join('\n');
 
     const prompt = `Generate 3-5 sprint goals based on these issues:
 
@@ -286,14 +277,13 @@ Goals should be:
 Output just the goals, one per line, no numbering.`;
 
     const response = await generate(prompt, { systemPrompt: SYSTEM_PROMPT });
-    return response.split('\n').filter((line) => line.trim().length > 0).slice(0, 5);
+    return response
+        .split('\n')
+        .filter((line) => line.trim().length > 0)
+        .slice(0, 5);
 }
 
-async function createGitHubMilestone(
-    title: string,
-    dueDate: string,
-    goals: string[]
-): Promise<number> {
+async function createGitHubMilestone(title: string, dueDate: string, goals: string[]): Promise<number> {
     // Milestones not yet available via GitHub MCP
     // For now, just log and return a placeholder
     console.log(`Would create milestone: ${title} (due: ${dueDate})`);

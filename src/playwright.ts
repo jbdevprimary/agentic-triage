@@ -25,9 +25,7 @@ export interface PlaywrightOptions {
 /**
  * Create a Playwright MCP client
  */
-export async function createPlaywrightClient(
-    options: PlaywrightOptions = {}
-): Promise<MCPClient> {
+export async function createPlaywrightClient(options: PlaywrightOptions = {}): Promise<MCPClient> {
     const {
         headless = true,
         browser = 'chromium',

@@ -17,32 +17,29 @@
 import { Command } from 'commander';
 import pc from 'picocolors';
 import { assess } from './commands/assess.js';
-import { review } from './commands/review.js';
-import { autoLabel } from './commands/label.js';
-import { develop } from './commands/develop.js';
-import { test } from './commands/test.js';
-import { plan } from './commands/plan.js';
-import { verify } from './commands/verify.js';
-import { diagnose } from './commands/diagnose.js';
-import { coverage } from './commands/coverage.js';
-import { generateTests } from './commands/generate.js';
-import { security } from './commands/security.js';
 import { automerge } from './commands/automerge.js';
-import { sprint } from './commands/sprint.js';
-import { roadmap } from './commands/roadmap.js';
 import { cascade } from './commands/cascade.js';
-import { harness } from './commands/harness.js';
-import { handleFeedback } from './commands/feedback.js';
-import { releaseCommand } from './commands/release.js';
-import { scan } from './commands/scan.js';
 import { configureRepository } from './commands/configure.js';
+import { coverage } from './commands/coverage.js';
+import { develop } from './commands/develop.js';
+import { diagnose } from './commands/diagnose.js';
+import { handleFeedback } from './commands/feedback.js';
+import { generateTests } from './commands/generate.js';
+import { harness } from './commands/harness.js';
+import { autoLabel } from './commands/label.js';
+import { plan } from './commands/plan.js';
+import { releaseCommand } from './commands/release.js';
+import { review } from './commands/review.js';
+import { roadmap } from './commands/roadmap.js';
+import { scan } from './commands/scan.js';
+import { security } from './commands/security.js';
+import { sprint } from './commands/sprint.js';
+import { test } from './commands/test.js';
+import { verify } from './commands/verify.js';
 
 const program = new Command();
 
-program
-    .name('triage')
-    .description('AI-powered development automation for Strata')
-    .version('1.0.0');
+program.name('triage').description('AI-powered development automation for Strata').version('1.0.0');
 
 // ============================================
 // ISSUE MANAGEMENT
@@ -146,29 +143,34 @@ program
     .option('-v, --verbose', 'Show verbose output')
     .option('-r, --run', 'Run generated tests immediately')
     .option('--overwrite', 'Overwrite existing test files')
-    .action(async (source: string, options: {
-        output?: string;
-        type?: string;
-        dryRun?: boolean;
-        verbose?: boolean;
-        run?: boolean;
-        overwrite?: boolean;
-    }) => {
-        try {
-            await generateTests({
-                source,
-                output: options.output,
-                type: options.type as 'unit' | 'integration' | 'component',
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-                run: options.run,
-                overwrite: options.overwrite,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (
+            source: string,
+            options: {
+                output?: string;
+                type?: string;
+                dryRun?: boolean;
+                verbose?: boolean;
+                run?: boolean;
+                overwrite?: boolean;
+            }
+        ) => {
+            try {
+                await generateTests({
+                    source,
+                    output: options.output,
+                    type: options.type as 'unit' | 'integration' | 'component',
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                    run: options.run,
+                    overwrite: options.overwrite,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 program
     .command('test')
@@ -202,28 +204,30 @@ program
     .option('-v, --verbose', 'Show verbose output')
     .option('--auto-fix', 'Attempt to auto-fix simple issues')
     .option('--create-issues', 'Create issues for new failures')
-    .action(async (options: {
-        report: string;
-        pr?: string;
-        dryRun?: boolean;
-        verbose?: boolean;
-        autoFix?: boolean;
-        createIssues?: boolean;
-    }) => {
-        try {
-            await diagnose({
-                report: options.report,
-                pr: options.pr ? parseInt(options.pr, 10) : undefined,
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-                autoFix: options.autoFix,
-                createIssues: options.createIssues,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (options: {
+            report: string;
+            pr?: string;
+            dryRun?: boolean;
+            verbose?: boolean;
+            autoFix?: boolean;
+            createIssues?: boolean;
+        }) => {
+            try {
+                await diagnose({
+                    report: options.report,
+                    pr: options.pr ? parseInt(options.pr, 10) : undefined,
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                    autoFix: options.autoFix,
+                    createIssues: options.createIssues,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 program
     .command('coverage')
@@ -234,28 +238,30 @@ program
     .option('-v, --verbose', 'Show verbose output')
     .option('--create-issues', 'Create issues for low coverage files')
     .option('--no-suggest', 'Skip AI test suggestions')
-    .action(async (options: {
-        report: string;
-        threshold?: string;
-        dryRun?: boolean;
-        verbose?: boolean;
-        createIssues?: boolean;
-        suggest?: boolean;
-    }) => {
-        try {
-            await coverage({
-                report: options.report,
-                threshold: options.threshold ? parseInt(options.threshold, 10) : undefined,
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-                createIssues: options.createIssues,
-                suggestTests: options.suggest !== false,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (options: {
+            report: string;
+            threshold?: string;
+            dryRun?: boolean;
+            verbose?: boolean;
+            createIssues?: boolean;
+            suggest?: boolean;
+        }) => {
+            try {
+                await coverage({
+                    report: options.report,
+                    threshold: options.threshold ? parseInt(options.threshold, 10) : undefined,
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                    createIssues: options.createIssues,
+                    suggestTests: options.suggest !== false,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 program
     .command('verify')
@@ -290,28 +296,30 @@ program
     .option('--sarif <file>', 'Output SARIF file for GitHub upload')
     .option('-n, --dry-run', 'Show what would be done without making changes')
     .option('-v, --verbose', 'Show verbose output')
-    .action(async (options: {
-        pr?: string;
-        dependabot?: boolean;
-        codeScanning?: boolean;
-        sarif?: string;
-        dryRun?: boolean;
-        verbose?: boolean;
-    }) => {
-        try {
-            await security({
-                pr: options.pr ? parseInt(options.pr, 10) : undefined,
-                dependabot: options.dependabot !== false,
-                codeScanning: options.codeScanning !== false,
-                sarifOutput: options.sarif,
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (options: {
+            pr?: string;
+            dependabot?: boolean;
+            codeScanning?: boolean;
+            sarif?: string;
+            dryRun?: boolean;
+            verbose?: boolean;
+        }) => {
+            try {
+                await security({
+                    pr: options.pr ? parseInt(options.pr, 10) : undefined,
+                    dependabot: options.dependabot !== false,
+                    codeScanning: options.codeScanning !== false,
+                    sarifOutput: options.sarif,
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 program
     .command('scan')
@@ -319,11 +327,7 @@ program
     .option('-d, --dir <directories...>', 'Directories to scan', ['src', 'internal'])
     .option('--sarif <file>', 'Output SARIF file for GitHub upload')
     .option('-v, --verbose', 'Show verbose output')
-    .action(async (options: {
-        dir?: string[];
-        sarif?: string;
-        verbose?: boolean;
-    }) => {
+    .action(async (options: { dir?: string[]; sarif?: string; verbose?: boolean }) => {
         try {
             const results = await scan({
                 directories: options.dir,
@@ -331,7 +335,7 @@ program
                 verbose: options.verbose,
             });
             // Exit with error if any errors found
-            if (results.some(r => r.severity === 'error')) {
+            if (results.some((r) => r.severity === 'error')) {
                 process.exit(1);
             }
         } catch (error) {
@@ -348,26 +352,28 @@ program
     .option('--no-secret-scanning', 'Skip enabling secret scanning')
     .option('-n, --dry-run', 'Show what would be done without making changes')
     .option('-v, --verbose', 'Show verbose output')
-    .action(async (options: {
-        disableCodeql?: boolean;
-        dependabot?: boolean;
-        secretScanning?: boolean;
-        dryRun?: boolean;
-        verbose?: boolean;
-    }) => {
-        try {
-            await configureRepository({
-                disableDefaultCodeQL: options.disableCodeql !== false,
-                enableDependabot: options.dependabot !== false,
-                enableSecretScanning: options.secretScanning !== false,
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (options: {
+            disableCodeql?: boolean;
+            dependabot?: boolean;
+            secretScanning?: boolean;
+            dryRun?: boolean;
+            verbose?: boolean;
+        }) => {
+            try {
+                await configureRepository({
+                    disableDefaultCodeQL: options.disableCodeql !== false,
+                    enableDependabot: options.dependabot !== false,
+                    enableSecretScanning: options.secretScanning !== false,
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 program
     .command('automerge')
@@ -378,25 +384,31 @@ program
     .option('--approve', 'Also approve the PR')
     .option('-n, --dry-run', 'Show what would be done without making changes')
     .option('-v, --verbose', 'Show verbose output')
-    .action(async (pr: string, action: string, options: {
-        mergeMethod?: string;
-        approve?: boolean;
-        dryRun?: boolean;
-        verbose?: boolean;
-    }) => {
-        try {
-            await automerge(parseInt(pr, 10), {
-                action: action as 'enable' | 'disable' | 'status' | 'wait' | 'draft' | 'ready',
-                mergeMethod: options.mergeMethod as 'MERGE' | 'SQUASH' | 'REBASE',
-                approve: options.approve,
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (
+            pr: string,
+            action: string,
+            options: {
+                mergeMethod?: string;
+                approve?: boolean;
+                dryRun?: boolean;
+                verbose?: boolean;
+            }
+        ) => {
+            try {
+                await automerge(parseInt(pr, 10), {
+                    action: action as 'enable' | 'disable' | 'status' | 'wait' | 'draft' | 'ready',
+                    mergeMethod: options.mergeMethod as 'MERGE' | 'SQUASH' | 'REBASE',
+                    approve: options.approve,
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 // ============================================
 // PROJECT PLANNING & AUTOMATION
@@ -413,32 +425,34 @@ program
     .option('--max-trigger <count>', 'Max issues to trigger', '3')
     .option('-n, --dry-run', 'Show what would be done without making changes')
     .option('-v, --verbose', 'Show verbose output')
-    .action(async (options: {
-        duration?: string;
-        capacity?: string;
-        name?: string;
-        milestone?: boolean;
-        trigger?: boolean;
-        maxTrigger?: string;
-        dryRun?: boolean;
-        verbose?: boolean;
-    }) => {
-        try {
-            await sprint({
-                duration: options.duration ? parseInt(options.duration, 10) : undefined,
-                capacity: options.capacity ? parseInt(options.capacity, 10) : undefined,
-                name: options.name,
-                milestone: options.milestone !== false,
-                trigger: options.trigger,
-                maxTrigger: options.maxTrigger ? parseInt(options.maxTrigger, 10) : undefined,
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (options: {
+            duration?: string;
+            capacity?: string;
+            name?: string;
+            milestone?: boolean;
+            trigger?: boolean;
+            maxTrigger?: string;
+            dryRun?: boolean;
+            verbose?: boolean;
+        }) => {
+            try {
+                await sprint({
+                    duration: options.duration ? parseInt(options.duration, 10) : undefined,
+                    capacity: options.capacity ? parseInt(options.capacity, 10) : undefined,
+                    name: options.name,
+                    milestone: options.milestone !== false,
+                    trigger: options.trigger,
+                    maxTrigger: options.maxTrigger ? parseInt(options.maxTrigger, 10) : undefined,
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 program
     .command('roadmap')
@@ -448,26 +462,28 @@ program
     .option('--update-project', 'Update GitHub project board')
     .option('-n, --dry-run', 'Show what would be done without making changes')
     .option('-v, --verbose', 'Show verbose output')
-    .action(async (options: {
-        quarters?: string;
-        includeCompleted?: boolean;
-        updateProject?: boolean;
-        dryRun?: boolean;
-        verbose?: boolean;
-    }) => {
-        try {
-            await roadmap({
-                quarters: options.quarters ? parseInt(options.quarters, 10) : undefined,
-                includeCompleted: options.includeCompleted,
-                updateProject: options.updateProject,
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (options: {
+            quarters?: string;
+            includeCompleted?: boolean;
+            updateProject?: boolean;
+            dryRun?: boolean;
+            verbose?: boolean;
+        }) => {
+            try {
+                await roadmap({
+                    quarters: options.quarters ? parseInt(options.quarters, 10) : undefined,
+                    includeCompleted: options.includeCompleted,
+                    updateProject: options.updateProject,
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 program
     .command('cascade')
@@ -478,28 +494,30 @@ program
     .option('--stop-on-failure', 'Stop cascade on first failure')
     .option('-n, --dry-run', 'Show what would be done without making changes')
     .option('-v, --verbose', 'Show verbose output')
-    .action(async (options: {
-        steps?: string;
-        maxParallel?: string;
-        delay?: string;
-        stopOnFailure?: boolean;
-        dryRun?: boolean;
-        verbose?: boolean;
-    }) => {
-        try {
-            await cascade({
-                steps: options.steps,
-                maxParallel: options.maxParallel ? parseInt(options.maxParallel, 10) : undefined,
-                delay: options.delay ? parseInt(options.delay, 10) : undefined,
-                stopOnFailure: options.stopOnFailure,
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (options: {
+            steps?: string;
+            maxParallel?: string;
+            delay?: string;
+            stopOnFailure?: boolean;
+            dryRun?: boolean;
+            verbose?: boolean;
+        }) => {
+            try {
+                await cascade({
+                    steps: options.steps,
+                    maxParallel: options.maxParallel ? parseInt(options.maxParallel, 10) : undefined,
+                    delay: options.delay ? parseInt(options.delay, 10) : undefined,
+                    stopOnFailure: options.stopOnFailure,
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 // ============================================
 // TESTING
@@ -518,36 +536,38 @@ program
     .option('--cleanup', 'Clean up all sandbox projects')
     .option('-n, --dry-run', 'Show what would be done without making changes')
     .option('-v, --verbose', 'Show verbose output')
-    .action(async (options: {
-        scenarios?: string;
-        project?: string;
-        issue?: string;
-        record?: boolean;
-        playback?: boolean;
-        output?: string;
-        list?: boolean;
-        cleanup?: boolean;
-        dryRun?: boolean;
-        verbose?: boolean;
-    }) => {
-        try {
-            await harness({
-                scenarios: options.scenarios?.split(',').map((s) => s.trim()),
-                projectNumber: options.project ? parseInt(options.project, 10) : undefined,
-                issueNumber: options.issue ? parseInt(options.issue, 10) : undefined,
-                record: options.record,
-                playback: options.playback,
-                output: options.output,
-                list: options.list,
-                cleanup: options.cleanup,
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (options: {
+            scenarios?: string;
+            project?: string;
+            issue?: string;
+            record?: boolean;
+            playback?: boolean;
+            output?: string;
+            list?: boolean;
+            cleanup?: boolean;
+            dryRun?: boolean;
+            verbose?: boolean;
+        }) => {
+            try {
+                await harness({
+                    scenarios: options.scenarios?.split(',').map((s) => s.trim()),
+                    projectNumber: options.project ? parseInt(options.project, 10) : undefined,
+                    issueNumber: options.issue ? parseInt(options.issue, 10) : undefined,
+                    record: options.record,
+                    playback: options.playback,
+                    output: options.output,
+                    list: options.list,
+                    cleanup: options.cleanup,
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 // ============================================
 // PR FEEDBACK
@@ -561,24 +581,29 @@ program
     .option('--ready-for-review', 'Mark PR as ready for review when done')
     .option('-n, --dry-run', 'Show what would be done without making changes')
     .option('-v, --verbose', 'Show verbose output')
-    .action(async (pr: string, options: {
-        resolve?: boolean;
-        readyForReview?: boolean;
-        dryRun?: boolean;
-        verbose?: boolean;
-    }) => {
-        try {
-            await handleFeedback(parseInt(pr, 10), {
-                resolve: options.resolve !== false,
-                readyForReview: options.readyForReview,
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (
+            pr: string,
+            options: {
+                resolve?: boolean;
+                readyForReview?: boolean;
+                dryRun?: boolean;
+                verbose?: boolean;
+            }
+        ) => {
+            try {
+                await handleFeedback(parseInt(pr, 10), {
+                    resolve: options.resolve !== false,
+                    readyForReview: options.readyForReview,
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 // ============================================
 // RELEASE MANAGEMENT
@@ -595,31 +620,33 @@ program
     .option('--npm-tag <tag>', 'npm dist-tag (default: latest, or prerelease type)')
     .option('-n, --dry-run', 'Show what would be done without making changes')
     .option('-v, --verbose', 'Show verbose output')
-    .action(async (options: {
-        prerelease?: string;
-        skipChangelog?: boolean;
-        skipTag?: boolean;
-        skipGithub?: boolean;
-        skipNpm?: boolean;
-        npmTag?: string;
-        dryRun?: boolean;
-        verbose?: boolean;
-    }) => {
-        try {
-            await releaseCommand({
-                prerelease: options.prerelease,
-                skipChangelog: options.skipChangelog,
-                skipTag: options.skipTag,
-                skipGithub: options.skipGithub,
-                skipNpm: options.skipNpm,
-                npmTag: options.npmTag,
-                dryRun: options.dryRun,
-                verbose: options.verbose,
-            });
-        } catch (error) {
-            console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
-            process.exit(1);
+    .action(
+        async (options: {
+            prerelease?: string;
+            skipChangelog?: boolean;
+            skipTag?: boolean;
+            skipGithub?: boolean;
+            skipNpm?: boolean;
+            npmTag?: string;
+            dryRun?: boolean;
+            verbose?: boolean;
+        }) => {
+            try {
+                await releaseCommand({
+                    prerelease: options.prerelease,
+                    skipChangelog: options.skipChangelog,
+                    skipTag: options.skipTag,
+                    skipGithub: options.skipGithub,
+                    skipNpm: options.skipNpm,
+                    npmTag: options.npmTag,
+                    dryRun: options.dryRun,
+                    verbose: options.verbose,
+                });
+            } catch (error) {
+                console.error(pc.red(`Error: ${error instanceof Error ? error.message : error}`));
+                process.exit(1);
+            }
         }
-    });
+    );
 
 program.parse();

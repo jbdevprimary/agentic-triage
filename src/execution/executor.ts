@@ -8,23 +8,17 @@
  * - Plan-only mode (no execution)
  */
 
-import pc from 'picocolors';
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import pc from 'picocolors';
 import { generate, generateWithTools } from '../ai.js';
 import { createInlineFilesystemClient, getFilesystemTools } from '../mcp.js';
-import {
-    type ExecutionPlan,
-    type PlanStep,
-    type StepResult,
-    type ExecutionResult,
-    type ExecutionMode,
-} from './plan.js';
-import { HttpRecorder, createRecorder } from './recorder.js';
-import { Sandbox, createSandbox } from './sandbox.js';
-import { MockMCPProvider, createMockMCP } from './mock-mcp.js';
-import { type FixtureRepo } from './fixtures.js';
+import type { FixtureRepo } from './fixtures.js';
+import { createMockMCP, type MockMCPProvider } from './mock-mcp.js';
+import type { ExecutionMode, ExecutionPlan, PlanStep, StepResult } from './plan.js';
+import { createRecorder, type HttpRecorder } from './recorder.js';
+import { createSandbox, type Sandbox } from './sandbox.js';
 
 export interface ExecutorOptions {
     /** Execution mode */
@@ -46,10 +40,7 @@ export interface ExecutorOptions {
 /**
  * Execute a plan
  */
-export async function executePlan(
-    plan: ExecutionPlan,
-    options: ExecutorOptions
-): Promise<ExecutionPlan> {
+export async function executePlan(plan: ExecutionPlan, options: ExecutorOptions): Promise<ExecutionPlan> {
     const startTime = new Date();
     plan.mode = options.mode;
 
@@ -116,6 +107,14 @@ export async function executePlan(
 
                 if (options.verbose) {
                     console.log(pc.green(`    ✓ Complete`));
+                }
+            } else if (result.status === 'skipped') {
+                // Skipped steps are not failures (e.g. plan-only mode)
+                completed.add(step.id);
+                stepsSkipped++;
+
+                if (options.verbose) {
+                    console.log(pc.dim(`    ↷ Skipped`));
                 }
             } else {
                 failed.add(step.id);
@@ -194,10 +193,7 @@ interface ExecutionEnvironment {
     workingDir: string;
 }
 
-async function setupEnvironment(
-    plan: ExecutionPlan,
-    options: ExecutorOptions
-): Promise<ExecutionEnvironment> {
+async function setupEnvironment(plan: ExecutionPlan, options: ExecutorOptions): Promise<ExecutionEnvironment> {
     const env: ExecutionEnvironment = {
         mode: options.mode,
         workingDir: plan.context.workingDirectory,
@@ -206,19 +202,13 @@ async function setupEnvironment(
     switch (options.mode) {
         case 'recorded':
             // Setup VCR recorder in playback mode
-            env.recorder = createRecorder(
-                options.recordingsDir || '.triage-recordings',
-                'playback'
-            );
+            env.recorder = createRecorder(options.recordingsDir || '.triage-recordings', 'playback');
             env.recorder.start(plan.id);
             break;
 
         case 'dry-run':
             // Record new interactions
-            env.recorder = createRecorder(
-                options.recordingsDir || '.triage-recordings',
-                'record'
-            );
+            env.recorder = createRecorder(options.recordingsDir || '.triage-recordings', 'record');
             env.recorder.start(plan.id);
 
             // Setup sandbox filesystem
@@ -234,8 +224,6 @@ async function setupEnvironment(
         case 'plan-only':
             // No setup needed
             break;
-
-        case 'live':
         default:
             // No special setup for live mode
             break;
@@ -255,7 +243,7 @@ async function cleanupEnvironment(env: ExecutionEnvironment): Promise<void> {
 
 async function executeStep(
     step: PlanStep,
-    plan: ExecutionPlan,
+    _plan: ExecutionPlan,
     env: ExecutionEnvironment,
     options: ExecutorOptions
 ): Promise<StepResult> {
@@ -293,7 +281,7 @@ async function executeStep(
 async function executeStepByType(
     step: PlanStep,
     env: ExecutionEnvironment,
-    options: ExecutorOptions
+    _options: ExecutorOptions
 ): Promise<unknown> {
     const config = step.config;
 
@@ -313,15 +301,18 @@ async function executeStepByType(
                 // Convert MockTool to generic record
                 const mockTools = env.mockMCP.getTools();
                 tools = Object.fromEntries(
-                    Object.entries(mockTools).map(([name, tool]) => [name, {
-                        description: `${tool.category} operation: ${name}`,
-                        execute: tool.execute,
-                    }])
+                    Object.entries(mockTools).map(([name, tool]) => [
+                        name,
+                        {
+                            description: `${tool.category} operation: ${name}`,
+                            execute: tool.execute,
+                        },
+                    ])
                 );
             } else {
                 // Create MCP client for the working directory
                 const mcpClient = await createInlineFilesystemClient(env.workingDir);
-                tools = await getFilesystemTools(mcpClient) as Record<string, unknown>;
+                tools = (await getFilesystemTools(mcpClient)) as Record<string, unknown>;
             }
 
             const result = await generateWithTools(config.userPrompt, tools, {
@@ -392,7 +383,7 @@ async function executeStepByType(
                 if (tool && config.endpoint.includes('/issues/')) {
                     const match = config.endpoint.match(/\/issues\/(\d+)/);
                     if (match) {
-                        return tool.execute({ number: parseInt(match[1]) });
+                        return tool.execute({ number: parseInt(match[1], 10) });
                     }
                 }
             }

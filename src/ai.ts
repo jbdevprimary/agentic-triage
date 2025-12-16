@@ -1,16 +1,20 @@
 /**
- * AI Client using Vercel AI SDK with Ollama provider
+ * AI Client using Vercel AI SDK with agentic-control configuration
  *
- * Uses ollama-ai-provider (ai-sdk-ollama) for Ollama integration.
- * Configured via environment variables:
+ * This package is intended to be configured via agentic-control's config system
+ * (e.g. `agentic.config.json`) so that triage flows share a single, consistent
+ * MCP + provider configuration.
+ *
+ * Defaults remain Ollama-friendly for local/dev use:
  * - OLLAMA_API_KEY: API key for Ollama Cloud (optional for local)
- * - OLLAMA_MODEL: Model to use (default: qwen2.5)
+ * - OLLAMA_MODEL: Model to use (default: qwen3-coder:480b)
  * - OLLAMA_HOST: Host URL (default: http://localhost:11434/api for local)
  */
 
-import { ollama, createOllama } from 'ai-sdk-ollama';
-import { generateText, tool, stepCountIs } from 'ai';
-import { z } from 'zod';
+import { getOrLoadProvider, resolveProviderOptions } from 'agentic-control/core';
+import { generateText, stepCountIs, tool } from 'ai';
+import { createOllama, ollama } from 'ai-sdk-ollama';
+import type { z } from 'zod';
 
 // Use a looser type for tools to avoid version incompatibilities between
 // @ai-sdk/mcp and the ai package
@@ -24,6 +28,8 @@ export const CLOUD_HOST = 'https://ollama.com/api';
 export const LOCAL_HOST = 'http://localhost:11434/api';
 
 export interface AIConfig {
+    /** AI provider name (agentic-control supported providers) */
+    provider?: string;
     apiKey?: string;
     model?: string;
     host?: string;
@@ -48,7 +54,7 @@ export function getProvider(config: AIConfig = {}) {
     // Normalize host URL - ensure it ends with /api for Ollama endpoints
     let host = hostEnv || (apiKey ? CLOUD_HOST : LOCAL_HOST);
     if (host && !host.endsWith('/api')) {
-        host = host.replace(/\/$/, '') + '/api';
+        host = `${host.replace(/\/$/, '')}/api`;
     }
 
     // Create custom provider with auth headers for cloud
@@ -69,6 +75,37 @@ export function getModel(config: AIConfig = {}): string {
     return config.model || process.env.OLLAMA_MODEL || DEFAULT_MODEL;
 }
 
+/**
+ * Resolve the Vercel AI SDK model instance to use.
+ *
+ * - Uses agentic-control config (`agentic.config.*`) when provider is not Ollama.
+ * - Preserves the existing Ollama/local behavior when provider is omitted or "ollama".
+ */
+export async function resolveModel(config: AIConfig = {}): Promise<{
+    providerName: string;
+    modelId: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    model: any;
+}> {
+    const providerName = config.provider || process.env.TRIAGE_PROVIDER || 'ollama';
+
+    // Ollama remains the default and supports local mode without a key.
+    if (providerName === 'ollama') {
+        const provider = getProvider(config);
+        const modelId = getModel(config);
+        return { providerName, modelId, model: provider(modelId) };
+    }
+
+    // Non-Ollama providers use agentic-control's provider loader (dynamic import + key resolution).
+    const resolved = resolveProviderOptions({
+        provider: providerName,
+        model: config.model,
+        apiKey: config.apiKey,
+    });
+    const factory = await getOrLoadProvider(resolved.providerName, resolved.apiKey);
+    return { providerName: resolved.providerName, modelId: resolved.model, model: factory(resolved.model) };
+}
+
 export interface GenerateOptions {
     systemPrompt?: string;
     maxTokens?: number;
@@ -78,15 +115,11 @@ export interface GenerateOptions {
 /**
  * Generate text using the AI model (no tools)
  */
-export async function generate(
-    prompt: string,
-    options: GenerateOptions = {}
-): Promise<string> {
-    const provider = getProvider();
-    const modelId = getModel();
+export async function generate(prompt: string, options: GenerateOptions = {}): Promise<string> {
+    const resolved = await resolveModel();
 
     const result = await generateText({
-        model: provider(modelId),
+        model: resolved.model,
         system: options.systemPrompt,
         prompt,
         temperature: options.temperature,
@@ -119,25 +152,26 @@ export async function generateWithTools(
     tools: ToolSet,
     options: GenerateWithToolsOptions = {}
 ): Promise<GenerateWithToolsResult> {
-    const provider = getProvider();
-    const modelId = getModel();
+    const resolved = await resolveModel();
     const maxSteps = options.maxSteps ?? 10;
 
     const result = await generateText({
-        model: provider(modelId),
+        model: resolved.model,
         system: options.systemPrompt,
         prompt,
         tools,
         stopWhen: stepCountIs(maxSteps),
         temperature: options.temperature,
         maxOutputTokens: options.maxTokens,
-        onStepFinish: options.onStepFinish ? (step) => {
-            options.onStepFinish?.({
-                toolCalls: step.toolCalls,
-                toolResults: step.toolResults,
-                text: step.text,
-            });
-        } : undefined,
+        onStepFinish: options.onStepFinish
+            ? (step) => {
+                  options.onStepFinish?.({
+                      toolCalls: step.toolCalls,
+                      toolResults: step.toolResults,
+                      text: step.text,
+                  });
+              }
+            : undefined,
     });
 
     // Collect all tool calls and results from all steps
@@ -181,5 +215,5 @@ export function createTool<T extends z.ZodType>(config: {
 }
 
 // Re-export useful types and functions from ai package
-export { tool, stepCountIs } from 'ai';
+export { stepCountIs, tool } from 'ai';
 export { z } from 'zod';

@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import { getIssue, addLabels } from '../github.js';
+import { addIssueLabels, getIssue } from '../octokit.js';
 
 const TRIAGE_LABELS = ['needs-triage'];
 const SKIP_LABELS = ['bug', 'enhancement', 'feature', 'documentation', 'question'];
@@ -15,7 +15,7 @@ export async function autoLabel(issueNumber: number, options: LabelOptions = {})
     console.log(pc.blue(`Auto-labeling issue #${issueNumber}...`));
 
     // Get issue details
-    const issue = getIssue(issueNumber);
+    const issue = await getIssue(issueNumber);
 
     if (verbose) {
         console.log(pc.dim(`Title: ${issue.title}`));
@@ -45,7 +45,7 @@ export async function autoLabel(issueNumber: number, options: LabelOptions = {})
 
     // Add triage label
     console.log(pc.blue(`Adding label: ${TRIAGE_LABELS[0]}`));
-    addLabels(issueNumber, TRIAGE_LABELS);
+    await addIssueLabels(issueNumber, TRIAGE_LABELS);
 
     console.log(pc.green('Done!'));
 }

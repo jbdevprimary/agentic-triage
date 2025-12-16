@@ -32,7 +32,9 @@ function gh(args: string[]): string {
         encoding: 'utf-8',
         env: getGitHubEnv(),
         maxBuffer: 10 * 1024 * 1024, // 10MB for large diffs
-    }).toString().trim();
+    })
+        .toString()
+        .trim();
 }
 
 /**
@@ -61,7 +63,9 @@ function ghWithInput(args: string[], input: string): string {
 function git(args: string[]): string {
     return execFileSync('git', args, {
         encoding: 'utf-8',
-    }).toString().trim();
+    })
+        .toString()
+        .trim();
 }
 
 export function getIssue(issueNumber: number): Issue {

@@ -10,131 +10,122 @@
  * - Mock MCP providers
  */
 
-// Plan types and utilities
+// Executor
 export {
-    type ExecutionPlan,
-    type ExecutionMode,
-    type PlanStep,
-    type PlanTrigger,
-    type PlanContext,
-    type StepConfig,
-    type StepResult,
-    type ExecutionResult,
-    type ResourceEstimates,
-    type ValidationResult,
-    createPlan,
-    addStep,
-    serializePlan,
-    deserializePlan,
-} from './plan.js';
-
-// Tokenizer and cost estimation
-export {
-    estimateTokens,
-    estimateFileTokens,
-    estimateCost,
-    fitsInContext,
-    splitForContext,
-    splitWithMetadata,
-    groupFilesByDirectory,
-    estimateStepTokens,
-    analyzePlanForSplitting,
-    MODELS,
-    type ModelConfig,
-    type ContentChunk,
-    type SplitResult,
-    type PlanSplitSuggestion,
-} from './tokenizer.js';
-
-// VCR-style recording
-export {
-    HttpRecorder,
-    createRecorder,
-    withRecording,
-    type Recording,
-    type RecordedInteraction,
-    type RecorderOptions,
-} from './recorder.js';
-
-// Sandbox filesystem
-export {
-    Sandbox,
-    createSandbox,
-    withSandbox,
-    type SandboxOptions,
-    type FileChange,
-    type ComparisonResult,
-} from './sandbox.js';
-
+    type ExecutorOptions,
+    executePlan,
+    executeWithFixture,
+} from './executor.js';
 // Fixture repositories
 export {
-    generateFixture,
-    generateFromScenario,
-    loadMockIssues,
-    loadMockPRs,
-    loadExpectations,
     cleanupFixture,
     FIXTURE_SCENARIOS,
-    type FixtureRepo,
-    type FixtureScenario,
-    type FixtureDefinition,
-    type FixtureFile,
     type FixtureCommit,
+    type FixtureDefinition,
+    type FixtureExpectations,
+    type FixtureFile,
     type FixtureIssue,
     type FixturePR,
-    type FixtureExpectations,
+    type FixtureRepo,
+    type FixtureScenario,
+    generateFixture,
+    generateFromScenario,
+    loadExpectations,
+    loadMockIssues,
+    loadMockPRs,
 } from './fixtures.js';
-
+// GitHub Project Sandbox
+export {
+    type CopiedIssue,
+    cleanupAllSandboxes,
+    copyIssueToSandbox,
+    createProjectSandbox,
+    deleteProjectSandbox,
+    deleteSandboxIssue,
+    listSandboxProjects,
+    type ProjectSandboxOptions,
+    type SandboxProject,
+    withIssueSandbox,
+    withProjectSandbox,
+} from './github-sandbox.js';
 // Mock MCP providers
 export {
-    MockMCPProvider,
     createMockMCP,
     type MockMCPOptions,
-    type MockTool,
+    MockMCPProvider,
     type MockState,
+    type MockTool,
     type TrackedOperation,
     type VerificationResult,
 } from './mock-mcp.js';
-
+// Plan types and utilities
+export {
+    addStep,
+    createPlan,
+    deserializePlan,
+    type ExecutionMode,
+    type ExecutionPlan,
+    type ExecutionResult,
+    type PlanContext,
+    type PlanStep,
+    type PlanTrigger,
+    type ResourceEstimates,
+    type StepConfig,
+    type StepResult,
+    serializePlan,
+    type ValidationResult,
+} from './plan.js';
 // Planners
 export {
+    type PlannerOptions,
     planAssess,
     planDevelop,
     planReview,
     planTestGeneration,
-    validatePlan,
     printPlanSummary,
-    type PlannerOptions,
+    validatePlan,
 } from './planner.js';
-
-// Executor
+// VCR-style recording
 export {
-    executePlan,
-    executeWithFixture,
-    type ExecutorOptions,
-} from './executor.js';
-
-// GitHub Project Sandbox
+    createRecorder,
+    HttpRecorder,
+    type RecordedInteraction,
+    type RecorderOptions,
+    type Recording,
+    withRecording,
+} from './recorder.js';
+// Sandbox filesystem
 export {
-    createProjectSandbox,
-    deleteProjectSandbox,
-    copyIssueToSandbox,
-    deleteSandboxIssue,
-    withProjectSandbox,
-    withIssueSandbox,
-    listSandboxProjects,
-    cleanupAllSandboxes,
-    type ProjectSandboxOptions,
-    type SandboxProject,
-    type CopiedIssue,
-} from './github-sandbox.js';
-
+    type ComparisonResult,
+    createSandbox,
+    type FileChange,
+    Sandbox,
+    type SandboxOptions,
+    withSandbox,
+} from './sandbox.js';
 // Test Harness
 export {
-    TestHarness,
     createTestHarness,
-    withTestHarness,
     runTriageTests,
+    TestHarness,
     type TestHarnessOptions,
     type TestResult,
+    withTestHarness,
 } from './test-harness.js';
+// Tokenizer and cost estimation
+export {
+    analyzePlanForSplitting,
+    type ContentChunk,
+    estimateCost,
+    estimateFileTokens,
+    estimateStepTokens,
+    estimateTokens,
+    fitsInContext,
+    groupFilesByDirectory,
+    MODELS,
+    type ModelConfig,
+    type PlanSplitSuggestion,
+    type SplitResult,
+    splitForContext,
+    splitWithMetadata,
+} from './tokenizer.js';
