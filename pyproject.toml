@@ -1,0 +1,78 @@
+# Semantic Release Configuration
+# This file configures python-semantic-release for automated versioning
+# based on conventional commits
+
+[tool.semantic_release]
+# Version source - read from package.json
+version_toml = []
+version_variables = []
+
+# Use package.json as the version source
+version_source = "tag"
+
+# Branch configuration
+branch = "main"
+
+# Commit message format
+commit_message = "chore(release): v{version}"
+
+# Changelog generation
+changelog_file = "CHANGELOG.md"
+
+# Upload to GitHub releases
+upload_to_repository = false
+upload_to_release = true
+
+# Build command (none - we use pnpm separately)
+build_command = ""
+
+# Commit parsing
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+    "feat",
+    "fix",
+    "docs",
+    "style",
+    "refactor",
+    "perf",
+    "test",
+    "build",
+    "ci",
+    "chore",
+    "deps",
+    "docker",
+    "revert"
+]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf", "deps", "docker"]
+
+# Remote configuration
+[tool.semantic_release.remote]
+type = "github"
+token = { env = "GH_TOKEN" }
+
+# Changelog configuration
+[tool.semantic_release.changelog]
+template_dir = "templates"
+changelog_file = "CHANGELOG.md"
+exclude_commit_patterns = [
+    "^chore\\(release\\):",
+    "^Merge"
+]
+
+[tool.semantic_release.changelog.environment]
+block_start_string = "{%"
+block_end_string = "%}"
+variable_start_string = "{{"
+variable_end_string = "}}"
+comment_start_string = "{#"
+comment_end_string = "#}"
+trim_blocks = true
+lstrip_blocks = false
+newline_sequence = "\n"
+keep_trailing_newline = true
+
+# Publish configuration - skip git push (handled by workflow)
+[tool.semantic_release.publish]
+dist_glob_patterns = ["dist/*"]
+upload_to_repository = false

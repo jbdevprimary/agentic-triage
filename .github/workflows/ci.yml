@@ -5,6 +5,8 @@ name: CI
 on:
   push:
     branches: [main]
+    tags:
+      - 'v*'
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -20,9 +22,9 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
 
@@ -38,7 +40,7 @@ jobs:
           STORE_PATH="${STORE_PATH:-${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store}"
           echo "store=$STORE_PATH" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.store }}
           key: pnpm-store-${{ hashFiles('pnpm-lock.yaml', 'package.json') }}
@@ -57,7 +59,7 @@ jobs:
         run: pnpm run typecheck
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: dist
@@ -68,9 +70,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
 
@@ -81,7 +83,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v4
         with:
           name: build-output
           path: dist
@@ -93,28 +95,123 @@ jobs:
         uses: coverallsapp/github-action@v2
 
       - name: Upload test results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
           path: coverage/
           retention-days: 7
 
-  release:
-    name: Release
+  # Determine if a release is needed based on conventional commits
+  check-release:
+    name: Check Release
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [build, test]
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      new_version: ${{ steps.check.outputs.new_version }}
+      release_notes: ${{ steps.notes.outputs.notes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install python-semantic-release
+        run: pip install python-semantic-release
+
+      - name: Analyze commits for release
+        id: check
+        run: |
+          # Get the next version without making changes
+          NEW_VERSION=$(semantic-release --noop version --print 2>/dev/null || echo "")
+          
+          if [ -n "$NEW_VERSION" ]; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "📦 New version detected: $NEW_VERSION"
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "📭 No release needed"
+          fi
+
+      - name: Generate release notes
+        id: notes
+        if: steps.check.outputs.should_release == 'true'
+        run: |
+          # Get the last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -n "$LAST_TAG" ]; then
+            COMPARE_REF="$LAST_TAG..HEAD"
+          else
+            COMPARE_REF="HEAD"
+          fi
+          
+          # Generate release notes from conventional commits
+          {
+            echo "notes<<EOF"
+            echo "## What's Changed"
+            echo ""
+            
+            # Features
+            FEATURES=$(git log $COMPARE_REF --pretty=format:"%s" | grep -E "^feat(\(.+\))?:" | sed 's/^feat(\([^)]*\)):/- **\1:**/' | sed 's/^feat:/- /' || true)
+            if [ -n "$FEATURES" ]; then
+              echo "### 🚀 Features"
+              echo "$FEATURES"
+              echo ""
+            fi
+            
+            # Fixes
+            FIXES=$(git log $COMPARE_REF --pretty=format:"%s" | grep -E "^fix(\(.+\))?:" | sed 's/^fix(\([^)]*\)):/- **\1:**/' | sed 's/^fix:/- /' || true)
+            if [ -n "$FIXES" ]; then
+              echo "### 🐛 Bug Fixes"
+              echo "$FIXES"
+              echo ""
+            fi
+            
+            # Dependencies
+            DEPS=$(git log $COMPARE_REF --pretty=format:"%s" | grep -E "^deps(\(.+\))?:" | sed 's/^deps(\([^)]*\)):/- **\1:**/' | sed 's/^deps:/- /' || true)
+            if [ -n "$DEPS" ]; then
+              echo "### 📦 Dependencies"
+              echo "$DEPS"
+              echo ""
+            fi
+            
+            # CI/CD
+            CI=$(git log $COMPARE_REF --pretty=format:"%s" | grep -E "^ci(\(.+\))?:" | sed 's/^ci(\([^)]*\)):/- **\1:**/' | sed 's/^ci:/- /' || true)
+            if [ -n "$CI" ]; then
+              echo "### 🔧 CI/CD"
+              echo "$CI"
+              echo ""
+            fi
+            
+            # Docker
+            DOCKER=$(git log $COMPARE_REF --pretty=format:"%s" | grep -E "^docker(\(.+\))?:" | sed 's/^docker(\([^)]*\)):/- **\1:**/' | sed 's/^docker:/- /' || true)
+            if [ -n "$DOCKER" ]; then
+              echo "### 🐳 Docker"
+              echo "$DOCKER"
+              echo ""
+            fi
+            
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+  # Create release on GitHub (without pushing to protected branch)
+  release:
+    name: Release
+    if: needs.check-release.outputs.should_release == 'true'
+    needs: [check-release]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
@@ -126,46 +223,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v4
         with:
           name: build-output
           path: dist
 
-      - name: Git config
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Install python-semantic-release
-        run: pip install python-semantic-release
-
-      - name: Check if release needed
-        id: check
-        run: |
-          NEW_VERSION=$(semantic-release --noop version --print 2>/dev/null || true)
-          if [ -n "$NEW_VERSION" ]; then
-            echo "should_release=true" >> $GITHUB_OUTPUT
-            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "should_release=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Release version
-        if: steps.check.outputs.should_release == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: semantic-release version
-
-      - name: Publish to NPM
-        if: steps.check.outputs.should_release == 'true'
-        run: pnpm publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Create GitHub Release
-        if: steps.check.outputs.should_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.check.outputs.version }}
-          name: v${{ steps.check.outputs.version }}
+          tag_name: v${{ needs.check-release.outputs.new_version }}
+          name: v${{ needs.check-release.outputs.new_version }}
+          body: ${{ needs.check-release.outputs.release_notes }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to NPM
+        run: |
+          # Update package.json version for publishing
+          npm version ${{ needs.check-release.outputs.new_version }} --no-git-tag-version
+          pnpm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
