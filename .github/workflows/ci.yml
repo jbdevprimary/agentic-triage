@@ -20,9 +20,9 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
 
@@ -38,7 +38,7 @@ jobs:
           STORE_PATH="${STORE_PATH:-${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store}"
           echo "store=$STORE_PATH" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-cache.outputs.store }}
           key: pnpm-store-${{ hashFiles('pnpm-lock.yaml', 'package.json') }}
@@ -57,7 +57,7 @@ jobs:
         run: pnpm run typecheck
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-output
           path: dist
@@ -68,9 +68,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
 
@@ -81,7 +81,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: build-output
           path: dist
@@ -93,7 +93,7 @@ jobs:
         uses: coverallsapp/github-action@v2
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: test-results
@@ -109,12 +109,12 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
@@ -126,7 +126,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: build-output
           path: dist
