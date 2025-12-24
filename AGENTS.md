@@ -169,3 +169,62 @@ Tools return structured errors that agents can understand:
 ## Related
 
 - [README.md](./README.md) - Main documentation
+
+## Sigma-Weighted Scoring System (NEW)
+
+The scoring module provides provider-agnostic complexity evaluation:
+
+### Key Components
+
+| Module | Purpose |
+|--------|---------|
+| `scoring/weights.ts` | Dimension weights and tier thresholds |
+| `scoring/evaluator.ts` | LLM-agnostic complexity evaluation |
+| `scoring/agents.ts` | Agent registry interfaces (no implementations) |
+| `scoring/router.ts` | Intelligent task routing |
+| `queue/manager.ts` | Priority queue with locking |
+| `queue/storage.ts` | Storage interface + MemoryStorage |
+
+### Usage
+
+```typescript
+import { 
+  evaluateComplexity, 
+  AgentRegistry, 
+  TaskRouter 
+} from '@agentic/triage';
+
+// Provide your own LLM evaluator
+const evaluate = async (prompt: string) => {
+  // Call Ollama, OpenAI, Anthropic, etc.
+  return response;
+};
+
+// Evaluate complexity
+const score = await evaluateComplexity(evaluate, 'Fix the bug', diff);
+console.log(score.tier);     // 'simple'
+console.log(score.weighted); // 3.5
+
+// Set up agents (implementations from @agentic/providers)
+const registry = new AgentRegistry()
+  .register(myOllamaAgent)
+  .register(myJulesAgent);
+
+// Route tasks
+const router = new TaskRouter({ registry });
+const result = await router.route(task, score);
+```
+
+### The Algorithm
+
+Tasks scored across 8 dimensions (0-10 each):
+- `files_changed` (0.15) - Number of files
+- `lines_changed` (0.10) - Volume of changes
+- `dependency_depth` (0.15) - Import chain depth
+- `test_coverage_need` (0.10) - Testing complexity
+- `cross_module_impact` (0.15) - System-wide effects
+- `semantic_complexity` (0.20) - Logic difficulty
+- `context_required` (0.10) - Codebase knowledge
+- `risk_level` (0.05) - Breaking change risk
+
+Weighted score → tier → agent routing.
