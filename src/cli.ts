@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { resolveModel } from './ai.js';
-import { analyzeIssue } from './handlers/index.js';
 
 const program = new Command();
 
