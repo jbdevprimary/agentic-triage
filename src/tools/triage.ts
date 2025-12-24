@@ -8,7 +8,7 @@ export const triageTool = tool({
         id: z.number().describe('The ID of the issue or pull request to triage.'),
         type: z.enum(['issue', 'pull-request']).describe('The type of item to triage.'),
     }),
-    execute: async ({ id, type }: any) => {
+    execute: async ({ id, type }) => {
         if (type === 'issue') {
             const issue = await getIssue(id);
             return {
@@ -26,4 +26,4 @@ export const triageTool = tool({
             type: 'pull-request',
         };
     },
-} as any);
+});

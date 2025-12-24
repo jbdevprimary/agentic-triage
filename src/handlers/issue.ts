@@ -1,4 +1,4 @@
-import { type LanguageModel, streamText, tool } from 'ai';
+import { generateObject, type LanguageModel } from 'ai';
 import { issueAnalysisSchema } from '../schemas/index.js';
 
 /**
@@ -6,29 +6,18 @@ import { issueAnalysisSchema } from '../schemas/index.js';
  *
  * @param issueBody - The content of the issue to analyze
  * @param model - The Vercel AI SDK model to use
- * @returns A stream result from streamText
+ * @returns The structured analysis result
  */
-export async function analyzeIssue(issueBody: string, model: LanguageModel): Promise<any> {
-    try {
-        if (!issueBody) {
-            throw new Error('Issue body is required');
-        }
-
-        const result = await streamText({
-            model,
-            prompt: `Analyze the following issue and provide a summary, impact, and suggestions:\n\n${issueBody}`,
-            tools: {
-                analyze: tool({
-                    description: 'Analyze the issue.',
-                    parameters: issueAnalysisSchema,
-                    execute: async (input: any) => input,
-                } as any),
-            },
-        });
-
-        return result;
-    } catch (error) {
-        console.error('Error in analyzeIssue:', error);
-        throw error;
+export async function analyzeIssue(issueBody: string, model: LanguageModel) {
+    if (!issueBody) {
+        throw new Error('Issue body is required');
     }
+
+    const result = await generateObject({
+        model,
+        schema: issueAnalysisSchema,
+        prompt: `Analyze the following issue and provide a summary, impact, and suggestions:\n\n${issueBody}`,
+    });
+
+    return result.object;
 }

@@ -1,12 +1,12 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { createIssue, getIssue, updateIssue } from '../octokit.js';
+import { addIssueLabels, createIssue, getIssue, searchIssues, updateIssue } from '../octokit.js';
 import { issueSchema } from '../schemas/issue.js';
 
 export const createIssueTool = tool({
-    description: 'Create a new issue.',
+    description: 'Create a new issue in the issue tracker.',
     parameters: issueSchema,
-    execute: async (issue: any) => {
+    execute: async (issue) => {
         const { number } = await createIssue({
             title: issue.title,
             body: issue.body,
@@ -14,14 +14,14 @@ export const createIssueTool = tool({
         });
         return { id: number, ...issue };
     },
-} as any);
+});
 
 export const getIssueTool = tool({
-    description: 'Get an issue by its ID.',
+    description: 'Get detailed issue by ID.',
     parameters: z.object({
         id: z.number().describe('The ID of the issue to retrieve.'),
     }),
-    execute: async ({ id }: any) => {
+    execute: async ({ id }) => {
         const issue = await getIssue(id);
         return {
             id: issue.number,
@@ -31,15 +31,15 @@ export const getIssueTool = tool({
             labels: issue.labels,
         };
     },
-} as any);
+});
 
 export const updateIssueTool = tool({
-    description: 'Update an existing issue.',
+    description: 'Update issue fields.',
     parameters: z.object({
         id: z.number().describe('The ID of the issue to update.'),
         updates: issueSchema.partial().describe('The fields to update.'),
     }),
-    execute: async ({ id, updates }: any) => {
+    execute: async ({ id, updates }) => {
         const labels = updates.labels ? [...updates.labels] : undefined;
         if (updates.type && labels) labels.push(`type:${updates.type}`);
         if (updates.priority && labels) labels.push(`priority:${updates.priority}`);
@@ -51,4 +51,71 @@ export const updateIssueTool = tool({
         });
         return { id, ...updates };
     },
-} as any);
+});
+
+export const listIssuesTool = tool({
+    description: 'List issues with filters (status, priority, type, labels).',
+    parameters: z.object({
+        status: z.enum(['open', 'closed']).optional().default('open'),
+        labels: z.array(z.string()).optional(),
+        limit: z.number().optional().default(50),
+    }),
+    execute: async ({ status, labels }) => {
+        let query = `is:${status}`;
+        if (labels && labels.length > 0) {
+            query += ` ${labels.map((l) => `label:"${l}"`).join(' ')}`;
+        }
+        const issues = await searchIssues(query);
+        return { issues };
+    },
+});
+
+export const closeIssueTool = tool({
+    description: 'Close issue with reason.',
+    parameters: z.object({
+        id: z.number().describe('The ID of the issue to close.'),
+        reason: z.string().optional().describe('Optional reason for closing.'),
+    }),
+    execute: async ({ id, reason }) => {
+        await updateIssue(id, { state: 'closed' });
+        return { id, state: 'closed', reason };
+    },
+});
+
+export const searchIssuesTool = tool({
+    description: 'Full-text search across issues.',
+    parameters: z.object({
+        query: z.string().describe('The search query.'),
+    }),
+    execute: async ({ query }) => {
+        const issues = await searchIssues(query);
+        return { issues };
+    },
+});
+
+export const addLabelsTool = tool({
+    description: 'Add labels to an issue.',
+    parameters: z.object({
+        id: z.number().describe('The ID of the issue.'),
+        labels: z.array(z.string()).describe('The labels to add.'),
+    }),
+    execute: async ({ id, labels }) => {
+        await addIssueLabels(id, labels);
+        return { id, labelsAdded: labels };
+    },
+});
+
+export const removeLabelsTool = tool({
+    description: 'Remove labels from an issue.',
+    parameters: z.object({
+        id: z.number().describe('The ID of the issue.'),
+        labels: z.array(z.string()).describe('The labels to remove.'),
+    }),
+    execute: async ({ id, labels }) => {
+        // octokit.ts doesn't have a direct removeIssueLabels, but we can use updateIssue
+        const issue = await getIssue(id);
+        const remainingLabels = issue.labels.filter((l) => !labels.includes(l));
+        await updateIssue(id, { labels: remainingLabels });
+        return { id, labelsRemoved: labels };
+    },
+});

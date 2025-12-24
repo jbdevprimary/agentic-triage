@@ -1,10 +1,10 @@
 # Agent Integration Guide
 
-This document describes how to integrate agentic-triage tools into your AI agent system.
+This document describes how to integrate @agentic/triage tools into your AI agent system.
 
 ## Overview
 
-agentic-triage provides **portable triage primitives** for AI agents. These are Vercel AI SDK-compatible tools that can be used with any model provider (Anthropic, OpenAI, Ollama, etc.).
+@agentic/triage provides **portable triage primitives** for AI agents. These are Vercel AI SDK-compatible tools that can be used with any model provider (Anthropic, OpenAI, Ollama, etc.).
 
 ## Tool Categories
 
@@ -41,7 +41,7 @@ agentic-triage provides **portable triage primitives** for AI agents. These are 
 ### Basic Agent Setup
 
 ```typescript
-import { getTriageTools } from 'agentic-triage';
+import { getTriageTools } from '@agentic/triage';
 import { generateText } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 
@@ -60,24 +60,6 @@ async function runTriageAgent(prompt: string) {
 await runTriageAgent('Find all critical bugs and create a triage plan');
 ```
 
-### With agentic-control
-
-```typescript
-import { getTriageTools } from 'agentic-triage';
-import { AgentFleet } from 'agentic-control';
-
-const fleet = new AgentFleet({
-  agents: {
-    triage: {
-      tools: getTriageTools(),
-      systemPrompt: 'You are a triage specialist...',
-    },
-  },
-});
-
-await fleet.dispatch('triage', 'Review all open issues');
-```
-
 ### Selective Tool Import
 
 ```typescript
@@ -85,7 +67,7 @@ import {
   listIssuesTool, 
   createIssueTool,
   searchIssuesTool 
-} from 'agentic-triage';
+} from '@agentic/triage';
 
 // Only give agent the tools it needs
 const minimalTools = {
@@ -98,8 +80,8 @@ const minimalTools = {
 ### Custom Provider Configuration
 
 ```typescript
-import { setTriageConnectors, TriageConnectors } from 'agentic-triage';
-import { getTriageTools } from 'agentic-triage';
+import { setTriageConnectors, TriageConnectors } from '@agentic/triage';
+import { getTriageTools } from '@agentic/triage';
 
 // Configure before using tools
 const connectors = new TriageConnectors({
@@ -187,4 +169,3 @@ Tools return structured errors that agents can understand:
 ## Related
 
 - [README.md](./README.md) - Main documentation
-- [agentic-control](https://github.com/jbdevprimary/agentic-control) - Agent fleet orchestration

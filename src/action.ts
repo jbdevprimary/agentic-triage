@@ -11,16 +11,15 @@ async function run() {
         }
 
         // Use default model or from env
-        const modelId = process.env.OLLAMA_MODEL || 'llama3';
+        const modelId = process.env.OLLAMA_MODEL || 'qwen3-coder:480b';
         const result = await analyzeIssue(issueBody, ollama(modelId));
 
-        // Consume the stream to extract text (High Severity fix)
-        const text = await result.text;
+        const resultJson = JSON.stringify(result, null, 2);
+        console.log('Analysis Result:', resultJson);
 
-        console.log('Analysis Result:', text);
-
-        // Set the output (High Severity fix)
-        core.setOutput('result', text);
+        // Set the output
+        core.setOutput('result', resultJson);
+        core.setOutput('summary', result.summary);
 
         console.log('Analysis completed successfully.');
     } catch (error) {
