@@ -1,5 +1,4 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 import { submitPRReview } from '../octokit.js';
 import { codeReviewSchema } from '../schemas/review.js';
 

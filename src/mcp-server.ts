@@ -157,25 +157,17 @@ server.tool(
 );
 
 // Sprints (stubs for now, will implement if possible)
-server.tool(
-    'list_sprints',
-    {},
-    async () => {
-        return {
-            content: [{ type: 'text', text: 'Sprint tools not yet implemented' }],
-        };
-    }
-);
+server.tool('list_sprints', {}, async () => {
+    return {
+        content: [{ type: 'text', text: 'Sprint tools not yet implemented' }],
+    };
+});
 
-server.tool(
-    'get_current_sprint',
-    {},
-    async () => {
-        return {
-            content: [{ type: 'text', text: 'Sprint tools not yet implemented' }],
-        };
-    }
-);
+server.tool('get_current_sprint', {}, async () => {
+    return {
+        content: [{ type: 'text', text: 'Sprint tools not yet implemented' }],
+    };
+});
 
 /**
  * Start the MCP server

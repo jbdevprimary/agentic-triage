@@ -163,79 +163,98 @@ export function getUncoveredFunctions(report: TestReport): { file: string; funct
 }
 
 /**
+ * Format summary section
+ */
+function formatSummary(summary: TestReport['summary']): string[] {
+    return [
+        '## Summary',
+        `- Total: ${summary.total}`,
+        `- Passed: ${summary.passed} ✅`,
+        `- Failed: ${summary.failed} ❌`,
+        `- Skipped: ${summary.skipped} ⏭️`,
+        `- Duration: ${(summary.duration / 1000).toFixed(2)}s`,
+        '',
+    ];
+}
+
+/**
+ * Format git context section
+ */
+function formatGitContext(git: TestReport['git']): string[] {
+    if (!git) return [];
+    const lines = ['## Git Context', `- Branch: ${git.branch}`, `- Commit: ${git.commit}`];
+    if (git.message) lines.push(`- Message: ${git.message}`);
+    lines.push('');
+    return lines;
+}
+
+/**
+ * Format a single test error
+ */
+function formatTestError(error: TestError): string[] {
+    const lines: string[] = ['', '**Error:**', '```', error.message];
+    if (error.codeFrame) {
+        lines.push('', error.codeFrame);
+    }
+    lines.push('```');
+    if (error.diff) {
+        lines.push('', '**Diff:**', '```diff', error.diff, '```');
+    }
+    return lines;
+}
+
+/**
+ * Format failed tests section
+ */
+function formatFailedTests(failed: TestResult[]): string[] {
+    if (failed.length === 0) return [];
+    const lines = ['## Failed Tests'];
+    for (const test of failed) {
+        lines.push(`### ${test.fullName}`);
+        lines.push(`- File: ${test.file}${test.line ? `:${test.line}` : ''}`);
+        lines.push(`- Duration: ${test.duration}ms`);
+        if (test.error) {
+            lines.push(...formatTestError(test.error));
+        }
+        lines.push('');
+    }
+    return lines;
+}
+
+/**
+ * Format coverage section
+ */
+function formatCoverage(coverage: CoverageData, report: TestReport): string[] {
+    const lines = [
+        '## Coverage',
+        `- Lines: ${coverage.lines.percentage.toFixed(1)}%`,
+        `- Functions: ${coverage.functions.percentage.toFixed(1)}%`,
+        `- Branches: ${coverage.branches.percentage.toFixed(1)}%`,
+        '',
+    ];
+
+    const lowCoverage = getLowCoverageFiles(report, 80);
+    if (lowCoverage.length > 0) {
+        lines.push('### Low Coverage Files (<80%)');
+        for (const file of lowCoverage.slice(0, 10)) {
+            lines.push(`- ${file.path}: ${file.lines.percentage.toFixed(1)}%`);
+        }
+        lines.push('');
+    }
+    return lines;
+}
+
+/**
  * Format test results for AI analysis
  */
 export function formatForAI(report: TestReport): string {
-    const lines: string[] = [];
+    const lines: string[] = [`# Test Report (${report.runner} - ${report.type})`, `Generated: ${report.timestamp}`, ''];
 
-    lines.push(`# Test Report (${report.runner} - ${report.type})`);
-    lines.push(`Generated: ${report.timestamp}`);
-    lines.push('');
-
-    // Summary
-    lines.push('## Summary');
-    lines.push(`- Total: ${report.summary.total}`);
-    lines.push(`- Passed: ${report.summary.passed} ✅`);
-    lines.push(`- Failed: ${report.summary.failed} ❌`);
-    lines.push(`- Skipped: ${report.summary.skipped} ⏭️`);
-    lines.push(`- Duration: ${(report.summary.duration / 1000).toFixed(2)}s`);
-    lines.push('');
-
-    // Git context
-    if (report.git) {
-        lines.push('## Git Context');
-        lines.push(`- Branch: ${report.git.branch}`);
-        lines.push(`- Commit: ${report.git.commit}`);
-        if (report.git.message) lines.push(`- Message: ${report.git.message}`);
-        lines.push('');
-    }
-
-    // Failed tests
-    const failed = getFailedTests(report);
-    if (failed.length > 0) {
-        lines.push('## Failed Tests');
-        for (const test of failed) {
-            lines.push(`### ${test.fullName}`);
-            lines.push(`- File: ${test.file}${test.line ? `:${test.line}` : ''}`);
-            lines.push(`- Duration: ${test.duration}ms`);
-            if (test.error) {
-                lines.push('');
-                lines.push('**Error:**');
-                lines.push('```');
-                lines.push(test.error.message);
-                if (test.error.codeFrame) {
-                    lines.push('');
-                    lines.push(test.error.codeFrame);
-                }
-                lines.push('```');
-                if (test.error.diff) {
-                    lines.push('');
-                    lines.push('**Diff:**');
-                    lines.push('```diff');
-                    lines.push(test.error.diff);
-                    lines.push('```');
-                }
-            }
-            lines.push('');
-        }
-    }
-
-    // Coverage
+    lines.push(...formatSummary(report.summary));
+    lines.push(...formatGitContext(report.git));
+    lines.push(...formatFailedTests(getFailedTests(report)));
     if (report.coverage) {
-        lines.push('## Coverage');
-        lines.push(`- Lines: ${report.coverage.lines.percentage.toFixed(1)}%`);
-        lines.push(`- Functions: ${report.coverage.functions.percentage.toFixed(1)}%`);
-        lines.push(`- Branches: ${report.coverage.branches.percentage.toFixed(1)}%`);
-        lines.push('');
-
-        const lowCoverage = getLowCoverageFiles(report, 80);
-        if (lowCoverage.length > 0) {
-            lines.push('### Low Coverage Files (<80%)');
-            for (const file of lowCoverage.slice(0, 10)) {
-                lines.push(`- ${file.path}: ${file.lines.percentage.toFixed(1)}%`);
-            }
-            lines.push('');
-        }
+        lines.push(...formatCoverage(report.coverage, report));
     }
 
     return lines.join('\n');
