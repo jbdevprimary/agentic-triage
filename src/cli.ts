@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { resolveModel } from './ai.js';
-import { analyzeIssue } from './handlers/index.js';
 
 const program = new Command();
 
@@ -14,7 +13,7 @@ program
     .action(async (issueNum) => {
         console.log(`Assessing issue ${issueNum}...`);
         // Implementation using primitives
-        const { model } = await resolveModel();
+        await resolveModel();
         // For assessment, we'd typically fetch the issue first
         console.log('Triage primitives called successfully.');
     });
