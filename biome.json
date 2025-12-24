@@ -42,6 +42,15 @@
     },
     "overrides": [
         {
+            "includes": [".cursor/**"],
+            "linter": {
+                "enabled": false
+            },
+            "formatter": {
+                "enabled": false
+            }
+        },
+        {
             "includes": ["*.test.ts", "*.spec.ts", "tests/**/*.ts"],
             "linter": {
                 "rules": {
