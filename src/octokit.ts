@@ -80,6 +80,35 @@ export async function closeAllClients(): Promise<void> {
     await Promise.all([closeGitHubClient(), closeGraphQLClient()]);
 }
 
+function findGraphQLTool(tools: Record<string, any>) {
+    // mcp-graphql exposes 'query-graphql' tool for executing queries
+    const tool = tools['query-graphql'] || tools.graphql || tools.execute || tools.query;
+    if (!tool) {
+        throw new Error(`GraphQL MCP tool not found. Available tools: ${Object.keys(tools).join(', ')}`);
+    }
+
+    if (typeof tool.execute !== 'function') {
+        throw new Error('GraphQL MCP tool is not executable');
+    }
+    return tool;
+}
+
+function parseGraphQLResponse(result: any) {
+    // Handle response format from mcp-graphql (may have content array)
+    let data = result;
+    if (result.content && Array.isArray(result.content)) {
+        const textContent = result.content.find((c: { type: string }) => c.type === 'text');
+        if (textContent?.text) {
+            data = JSON.parse(textContent.text);
+        }
+    }
+
+    if (data.errors && data.errors.length > 0) {
+        throw new Error(`GraphQL error: ${data.errors.map((e: { message: string }) => e.message).join(', ')}`);
+    }
+    return data.data || data;
+}
+
 /**
  * Execute a GraphQL query/mutation via MCP
  *
@@ -90,39 +119,17 @@ export async function closeAllClients(): Promise<void> {
 export async function executeGraphQL<T = unknown>(query: string, variables?: Record<string, unknown>): Promise<T> {
     const client = await getGraphQLMCPClient();
     const tools = await client.tools();
+    const tool = findGraphQLTool(tools);
 
-    // mcp-graphql exposes 'query-graphql' tool for executing queries
-    const tool = tools['query-graphql'] || tools.graphql || tools.execute || tools.query;
-    if (!tool) {
-        throw new Error(`GraphQL MCP tool not found. Available tools: ${Object.keys(tools).join(', ')}`);
+    // mcp-graphql expects variables as a JSON string, not an object
+    const args: { query: string; variables?: string } = { query };
+    if (variables && Object.keys(variables).length > 0) {
+        args.variables = JSON.stringify(variables);
     }
 
-    if (typeof tool.execute === 'function') {
-        // mcp-graphql expects variables as a JSON string, not an object
-        const args: { query: string; variables?: string } = { query };
-        if (variables && Object.keys(variables).length > 0) {
-            args.variables = JSON.stringify(variables);
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = await (tool.execute as any)(args);
-
-        // Handle response format from mcp-graphql (may have content array)
-        let data = result;
-        if (result.content && Array.isArray(result.content)) {
-            const textContent = result.content.find((c: { type: string }) => c.type === 'text');
-            if (textContent?.text) {
-                data = JSON.parse(textContent.text);
-            }
-        }
-
-        if (data.errors && data.errors.length > 0) {
-            throw new Error(`GraphQL error: ${data.errors.map((e: { message: string }) => e.message).join(', ')}`);
-        }
-        return (data.data || data) as T;
-    }
-
-    throw new Error('GraphQL MCP tool is not executable');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await (tool.execute as any)(args);
+    return parseGraphQLResponse(result) as T;
 }
 
 /**

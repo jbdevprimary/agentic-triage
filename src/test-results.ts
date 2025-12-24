@@ -162,17 +162,7 @@ export function getUncoveredFunctions(report: TestReport): { file: string; funct
         .map((f) => ({ file: f.path, functions: f.uncoveredFunctions }));
 }
 
-/**
- * Format test results for AI analysis
- */
-export function formatForAI(report: TestReport): string {
-    const lines: string[] = [];
-
-    lines.push(`# Test Report (${report.runner} - ${report.type})`);
-    lines.push(`Generated: ${report.timestamp}`);
-    lines.push('');
-
-    // Summary
+function formatSummary(report: TestReport, lines: string[]): void {
     lines.push('## Summary');
     lines.push(`- Total: ${report.summary.total}`);
     lines.push(`- Passed: ${report.summary.passed} ✅`);
@@ -180,8 +170,9 @@ export function formatForAI(report: TestReport): string {
     lines.push(`- Skipped: ${report.summary.skipped} ⏭️`);
     lines.push(`- Duration: ${(report.summary.duration / 1000).toFixed(2)}s`);
     lines.push('');
+}
 
-    // Git context
+function formatGitContext(report: TestReport, lines: string[]): void {
     if (report.git) {
         lines.push('## Git Context');
         lines.push(`- Branch: ${report.git.branch}`);
@@ -189,8 +180,28 @@ export function formatForAI(report: TestReport): string {
         if (report.git.message) lines.push(`- Message: ${report.git.message}`);
         lines.push('');
     }
+}
 
-    // Failed tests
+function formatTestError(error: TestError, lines: string[]): void {
+    lines.push('');
+    lines.push('**Error:**');
+    lines.push('```');
+    lines.push(error.message);
+    if (error.codeFrame) {
+        lines.push('');
+        lines.push(error.codeFrame);
+    }
+    lines.push('```');
+    if (error.diff) {
+        lines.push('');
+        lines.push('**Diff:**');
+        lines.push('```diff');
+        lines.push(error.diff);
+        lines.push('```');
+    }
+}
+
+function formatFailedTestsSection(report: TestReport, lines: string[]): void {
     const failed = getFailedTests(report);
     if (failed.length > 0) {
         lines.push('## Failed Tests');
@@ -199,28 +210,14 @@ export function formatForAI(report: TestReport): string {
             lines.push(`- File: ${test.file}${test.line ? `:${test.line}` : ''}`);
             lines.push(`- Duration: ${test.duration}ms`);
             if (test.error) {
-                lines.push('');
-                lines.push('**Error:**');
-                lines.push('```');
-                lines.push(test.error.message);
-                if (test.error.codeFrame) {
-                    lines.push('');
-                    lines.push(test.error.codeFrame);
-                }
-                lines.push('```');
-                if (test.error.diff) {
-                    lines.push('');
-                    lines.push('**Diff:**');
-                    lines.push('```diff');
-                    lines.push(test.error.diff);
-                    lines.push('```');
-                }
+                formatTestError(test.error, lines);
             }
             lines.push('');
         }
     }
+}
 
-    // Coverage
+function formatCoverageSection(report: TestReport, lines: string[]): void {
     if (report.coverage) {
         lines.push('## Coverage');
         lines.push(`- Lines: ${report.coverage.lines.percentage.toFixed(1)}%`);
@@ -237,6 +234,22 @@ export function formatForAI(report: TestReport): string {
             lines.push('');
         }
     }
+}
+
+/**
+ * Format test results for AI analysis
+ */
+export function formatForAI(report: TestReport): string {
+    const lines: string[] = [];
+
+    lines.push(`# Test Report (${report.runner} - ${report.type})`);
+    lines.push(`Generated: ${report.timestamp}`);
+    lines.push('');
+
+    formatSummary(report, lines);
+    formatGitContext(report, lines);
+    formatFailedTestsSection(report, lines);
+    formatCoverageSection(report, lines);
 
     return lines.join('\n');
 }
