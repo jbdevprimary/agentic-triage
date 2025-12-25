@@ -46,7 +46,7 @@ export type MCPClient = Awaited<ReturnType<typeof createMCPClient>>;
  * since Ollama can't fit everything in context.
  */
 export async function createFilesystemClient(workingDirectory: string): Promise<MCPClient> {
-    return createInlineFilesystemClient(workingDirectory);
+  return createInlineFilesystemClient(workingDirectory);
 }
 
 /**
@@ -56,11 +56,11 @@ export async function createFilesystemClient(workingDirectory: string): Promise<
  * All paths are sandboxed to workingDirectory for security.
  */
 export async function createInlineFilesystemClient(workingDirectory: string): Promise<MCPClient> {
-    const fs = await import('node:fs/promises');
-    const path = await import('node:path');
-    const os = await import('node:os');
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+  const os = await import('node:os');
 
-    const serverCode = `
+  const serverCode = `
 const fs = require('fs').promises;
 const path = require('path');
 const readline = require('readline');
@@ -234,23 +234,23 @@ rl.on('line', async (input) => {
 });
 `;
 
-    const serverPath = path.join(os.tmpdir(), `strata-fs-mcp-${Date.now()}.cjs`);
-    await fs.writeFile(serverPath, serverCode);
+  const serverPath = path.join(os.tmpdir(), `strata-fs-mcp-${Date.now()}.cjs`);
+  await fs.writeFile(serverPath, serverCode);
 
-    const transport = new StdioMCPTransport({
-        command: 'node',
-        args: [serverPath],
-        cwd: workingDirectory,
-    });
+  const transport = new StdioMCPTransport({
+    command: 'node',
+    args: [serverPath],
+    cwd: workingDirectory,
+  });
 
-    return createMCPClient({ transport });
+  return createMCPClient({ transport });
 }
 
 /**
  * Get filesystem tools from client
  */
 export async function getFilesystemTools(client: MCPClient): Promise<ToolSet> {
-    return client.tools();
+  return client.tools();
 }
 
 // =============================================================================
@@ -268,28 +268,28 @@ export async function getFilesystemTools(client: MCPClient): Promise<ToolSet> {
  * - search_issues, search_repositories
  */
 export async function createGitHubClient(): Promise<MCPClient> {
-    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-    if (!token) {
-        throw new Error('GITHUB_TOKEN or GH_TOKEN required for GitHub MCP');
-    }
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  if (!token) {
+    throw new Error('GITHUB_TOKEN or GH_TOKEN required for GitHub MCP');
+  }
 
-    const transport = new StdioMCPTransport({
-        command: 'npx',
-        args: ['-y', '@modelcontextprotocol/server-github'],
-        env: {
-            ...process.env,
-            GITHUB_PERSONAL_ACCESS_TOKEN: token,
-        },
-    });
+  const transport = new StdioMCPTransport({
+    command: 'npx',
+    args: ['-y', '@modelcontextprotocol/server-github'],
+    env: {
+      ...process.env,
+      GITHUB_PERSONAL_ACCESS_TOKEN: token,
+    },
+  });
 
-    return createMCPClient({ transport });
+  return createMCPClient({ transport });
 }
 
 /**
  * Get GitHub tools from client
  */
 export async function getGitHubTools(client: MCPClient): Promise<ToolSet> {
-    return client.tools();
+  return client.tools();
 }
 
 // =============================================================================
@@ -307,35 +307,40 @@ export async function getGitHubTools(client: MCPClient): Promise<ToolSet> {
  * - browser_verify_* (with testing capabilities)
  */
 export async function createPlaywrightClient(
-    options: {
-        headless?: boolean;
-        browser?: 'chromium' | 'firefox' | 'webkit';
-        outputDir?: string;
-        testingCapabilities?: boolean;
-    } = {}
+  options: {
+    headless?: boolean;
+    browser?: 'chromium' | 'firefox' | 'webkit';
+    outputDir?: string;
+    testingCapabilities?: boolean;
+  } = {}
 ): Promise<MCPClient> {
-    const { headless = true, browser = 'chromium', outputDir = './test-output', testingCapabilities = true } = options;
+  const {
+    headless = true,
+    browser = 'chromium',
+    outputDir = './test-output',
+    testingCapabilities = true,
+  } = options;
 
-    const args = ['-y', '@playwright/mcp@latest'];
+  const args = ['-y', '@playwright/mcp@latest'];
 
-    if (headless) args.push('--headless');
-    args.push('--browser', browser);
-    args.push('--output-dir', outputDir);
-    if (testingCapabilities) args.push('--caps=testing');
+  if (headless) args.push('--headless');
+  args.push('--browser', browser);
+  args.push('--output-dir', outputDir);
+  if (testingCapabilities) args.push('--caps=testing');
 
-    const transport = new StdioMCPTransport({
-        command: 'npx',
-        args,
-    });
+  const transport = new StdioMCPTransport({
+    command: 'npx',
+    args,
+  });
 
-    return createMCPClient({ transport });
+  return createMCPClient({ transport });
 }
 
 /**
  * Get Playwright tools from client
  */
 export async function getPlaywrightTools(client: MCPClient): Promise<ToolSet> {
-    return client.tools();
+  return client.tools();
 }
 
 // =============================================================================
@@ -357,18 +362,18 @@ export async function getPlaywrightTools(client: MCPClient): Promise<ToolSet> {
  * Requires CONTEXT7_API_KEY environment variable.
  */
 export async function createContext7Client(): Promise<MCPClient> {
-    const apiKey = process.env.CONTEXT7_API_KEY;
+  const apiKey = process.env.CONTEXT7_API_KEY;
 
-    // Use HTTP transport to Context7's cloud service
-    const client = await createMCPClient({
-        transport: {
-            type: 'http',
-            url: 'https://mcp.context7.com/mcp',
-            headers: apiKey ? { CONTEXT7_API_KEY: apiKey } : undefined,
-        },
-    });
+  // Use HTTP transport to Context7's cloud service
+  const client = await createMCPClient({
+    transport: {
+      type: 'http',
+      url: 'https://mcp.context7.com/mcp',
+      headers: apiKey ? { CONTEXT7_API_KEY: apiKey } : undefined,
+    },
+  });
 
-    return client;
+  return client;
 }
 
 /**
@@ -379,7 +384,7 @@ export async function createContext7Client(): Promise<MCPClient> {
  * - get-library-docs: Get library documentation
  */
 export async function getContext7Tools(client: MCPClient): Promise<ToolSet> {
-    return client.tools();
+  return client.tools();
 }
 
 // =============================================================================
@@ -401,31 +406,31 @@ export async function getContext7Tools(client: MCPClient): Promise<ToolSet> {
  * Requires the app to be running with vite-react-mcp plugin installed.
  */
 export async function createViteReactClient(
-    options: {
-        /** URL of the Vite dev server SSE endpoint (default: http://localhost:5173/sse) */
-        url?: string;
-        /** Port number (alternative to full URL) */
-        port?: number;
-    } = {}
+  options: {
+    /** URL of the Vite dev server SSE endpoint (default: http://localhost:5173/sse) */
+    url?: string;
+    /** Port number (alternative to full URL) */
+    port?: number;
+  } = {}
 ): Promise<MCPClient> {
-    const { port = 5173 } = options;
-    const url = options.url || `http://localhost:${port}/sse`;
+  const { port = 5173 } = options;
+  const url = options.url || `http://localhost:${port}/sse`;
 
-    const client = await createMCPClient({
-        transport: {
-            type: 'sse',
-            url,
-        },
-    });
+  const client = await createMCPClient({
+    transport: {
+      type: 'sse',
+      url,
+    },
+  });
 
-    return client;
+  return client;
 }
 
 /**
  * Get Vite React tools from client
  */
 export async function getViteReactTools(client: MCPClient): Promise<ToolSet> {
-    return client.tools();
+  return client.tools();
 }
 
 // =============================================================================
@@ -439,36 +444,36 @@ export async function getViteReactTools(client: MCPClient): Promise<ToolSet> {
  * Required for: Projects V2, review threads, draft PR conversion, auto-merge, etc.
  */
 export async function createGraphQLClient(): Promise<MCPClient> {
-    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-    if (!token) {
-        throw new Error('GITHUB_TOKEN or GH_TOKEN required for GraphQL MCP');
-    }
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  if (!token) {
+    throw new Error('GITHUB_TOKEN or GH_TOKEN required for GraphQL MCP');
+  }
 
-    // mcp-graphql v1.0.0+ uses environment variables instead of CLI args
-    const transport = new StdioMCPTransport({
-        command: 'npx',
-        args: ['-y', 'mcp-graphql'],
-        env: {
-            ...process.env,
-            ENDPOINT: 'https://api.github.com/graphql',
-            HEADERS: JSON.stringify({
-                Authorization: `Bearer ${token}`,
-            }),
-        },
-    });
+  // mcp-graphql v1.0.0+ uses environment variables instead of CLI args
+  const transport = new StdioMCPTransport({
+    command: 'npx',
+    args: ['-y', 'mcp-graphql'],
+    env: {
+      ...process.env,
+      ENDPOINT: 'https://api.github.com/graphql',
+      HEADERS: JSON.stringify({
+        Authorization: `Bearer ${token}`,
+      }),
+    },
+  });
 
-    return createMCPClient({
-        transport,
-        name: 'strata-triage-graphql',
-        version: '1.0.0',
-    });
+  return createMCPClient({
+    transport,
+    name: 'strata-triage-graphql',
+    version: '1.0.0',
+  });
 }
 
 /**
  * Get GraphQL tools from client
  */
 export async function getGraphQLTools(client: MCPClient): Promise<ToolSet> {
-    return client.tools();
+  return client.tools();
 }
 
 // =============================================================================
@@ -476,42 +481,42 @@ export async function getGraphQLTools(client: MCPClient): Promise<ToolSet> {
 // =============================================================================
 
 export interface MCPClients {
-    filesystem?: MCPClient;
-    github?: MCPClient;
-    playwright?: MCPClient;
-    context7?: MCPClient;
-    viteReact?: MCPClient;
-    graphql?: MCPClient;
+  filesystem?: MCPClient;
+  github?: MCPClient;
+  playwright?: MCPClient;
+  context7?: MCPClient;
+  viteReact?: MCPClient;
+  graphql?: MCPClient;
 }
 
 export interface MCPClientOptions {
-    /** Enable filesystem access (required for most tasks) */
-    filesystem?: boolean | string; // string = custom working directory
+  /** Enable filesystem access (required for most tasks) */
+  filesystem?: boolean | string; // string = custom working directory
 
-    /** Enable GitHub API access */
-    github?: boolean;
+  /** Enable GitHub API access */
+  github?: boolean;
 
-    /** Enable Playwright browser automation */
-    playwright?:
-        | boolean
-        | {
-              headless?: boolean;
-              browser?: 'chromium' | 'firefox' | 'webkit';
-          };
+  /** Enable Playwright browser automation */
+  playwright?:
+    | boolean
+    | {
+        headless?: boolean;
+        browser?: 'chromium' | 'firefox' | 'webkit';
+      };
 
-    /** Enable Context7 documentation lookup (PREVENTS HALLUCINATIONS!) */
-    context7?: boolean;
+  /** Enable Context7 documentation lookup (PREVENTS HALLUCINATIONS!) */
+  context7?: boolean;
 
-    /** Enable Vite React component debugging */
-    viteReact?:
-        | boolean
-        | {
-              url?: string;
-              port?: number;
-          };
+  /** Enable Vite React component debugging */
+  viteReact?:
+    | boolean
+    | {
+        url?: string;
+        port?: number;
+      };
 
-    /** Enable GitHub GraphQL API access via mcp-graphql */
-    graphql?: boolean;
+  /** Enable GitHub GraphQL API access via mcp-graphql */
+  graphql?: boolean;
 }
 
 /**
@@ -525,74 +530,74 @@ export interface MCPClientOptions {
  * });
  */
 export async function initializeMCPClients(options: MCPClientOptions): Promise<MCPClients> {
-    const clients: MCPClients = {};
-    const initPromises: Promise<void>[] = [];
+  const clients: MCPClients = {};
+  const initPromises: Promise<void>[] = [];
 
-    if (options.filesystem) {
-        const dir = typeof options.filesystem === 'string' ? options.filesystem : process.cwd();
-        initPromises.push(
-            createFilesystemClient(dir)
-                .then((client) => {
-                    clients.filesystem = client;
-                })
-                .catch((err) => console.warn('⚠️ Filesystem MCP unavailable:', err.message))
-        );
-    }
+  if (options.filesystem) {
+    const dir = typeof options.filesystem === 'string' ? options.filesystem : process.cwd();
+    initPromises.push(
+      createFilesystemClient(dir)
+        .then((client) => {
+          clients.filesystem = client;
+        })
+        .catch((err) => console.warn('⚠️ Filesystem MCP unavailable:', err.message))
+    );
+  }
 
-    if (options.github) {
-        initPromises.push(
-            createGitHubClient()
-                .then((client) => {
-                    clients.github = client;
-                })
-                .catch((err) => console.warn('⚠️ GitHub MCP unavailable:', err.message))
-        );
-    }
+  if (options.github) {
+    initPromises.push(
+      createGitHubClient()
+        .then((client) => {
+          clients.github = client;
+        })
+        .catch((err) => console.warn('⚠️ GitHub MCP unavailable:', err.message))
+    );
+  }
 
-    if (options.playwright) {
-        const playwrightOpts = typeof options.playwright === 'object' ? options.playwright : {};
-        initPromises.push(
-            createPlaywrightClient(playwrightOpts)
-                .then((client) => {
-                    clients.playwright = client;
-                })
-                .catch((err) => console.warn('⚠️ Playwright MCP unavailable:', err.message))
-        );
-    }
+  if (options.playwright) {
+    const playwrightOpts = typeof options.playwright === 'object' ? options.playwright : {};
+    initPromises.push(
+      createPlaywrightClient(playwrightOpts)
+        .then((client) => {
+          clients.playwright = client;
+        })
+        .catch((err) => console.warn('⚠️ Playwright MCP unavailable:', err.message))
+    );
+  }
 
-    if (options.context7) {
-        initPromises.push(
-            createContext7Client()
-                .then((client) => {
-                    clients.context7 = client;
-                })
-                .catch((err) => console.warn('⚠️ Context7 MCP unavailable:', err.message))
-        );
-    }
+  if (options.context7) {
+    initPromises.push(
+      createContext7Client()
+        .then((client) => {
+          clients.context7 = client;
+        })
+        .catch((err) => console.warn('⚠️ Context7 MCP unavailable:', err.message))
+    );
+  }
 
-    if (options.viteReact) {
-        const viteOpts = typeof options.viteReact === 'object' ? options.viteReact : {};
-        initPromises.push(
-            createViteReactClient(viteOpts)
-                .then((client) => {
-                    clients.viteReact = client;
-                })
-                .catch((err) => console.warn('⚠️ Vite React MCP unavailable:', err.message))
-        );
-    }
+  if (options.viteReact) {
+    const viteOpts = typeof options.viteReact === 'object' ? options.viteReact : {};
+    initPromises.push(
+      createViteReactClient(viteOpts)
+        .then((client) => {
+          clients.viteReact = client;
+        })
+        .catch((err) => console.warn('⚠️ Vite React MCP unavailable:', err.message))
+    );
+  }
 
-    if (options.graphql) {
-        initPromises.push(
-            createGraphQLClient()
-                .then((client) => {
-                    clients.graphql = client;
-                })
-                .catch((err) => console.warn('⚠️ GraphQL MCP unavailable:', err.message))
-        );
-    }
+  if (options.graphql) {
+    initPromises.push(
+      createGraphQLClient()
+        .then((client) => {
+          clients.graphql = client;
+        })
+        .catch((err) => console.warn('⚠️ GraphQL MCP unavailable:', err.message))
+    );
+  }
 
-    await Promise.all(initPromises);
-    return clients;
+  await Promise.all(initPromises);
+  return clients;
 }
 
 /**
@@ -601,39 +606,43 @@ export async function initializeMCPClients(options: MCPClientOptions): Promise<M
  * Tools are available without prefixes for simpler prompts.
  */
 export async function getAllTools(clients: MCPClients): Promise<ToolSet> {
-    const allTools: ToolSet = {};
-    const toolPromises: Promise<void>[] = [];
+  const allTools: ToolSet = {};
+  const toolPromises: Promise<void>[] = [];
 
-    for (const [name, client] of Object.entries(clients)) {
-        if (client) {
-            toolPromises.push(
-                client
-                    .tools()
-                    .then((tools: ToolSet) => {
-                        Object.assign(allTools, tools);
-                    })
-                    .catch((err: Error) => console.warn(`⚠️ Failed to get tools from ${name}:`, err.message))
-            );
-        }
+  for (const [name, client] of Object.entries(clients)) {
+    if (client) {
+      toolPromises.push(
+        client
+          .tools()
+          .then((tools: ToolSet) => {
+            Object.assign(allTools, tools);
+          })
+          .catch((err: Error) => console.warn(`⚠️ Failed to get tools from ${name}:`, err.message))
+      );
     }
+  }
 
-    await Promise.all(toolPromises);
-    return allTools;
+  await Promise.all(toolPromises);
+  return allTools;
 }
 
 /**
  * Close all MCP clients - ALWAYS call this when done!
  */
 export async function closeMCPClients(clients: MCPClients): Promise<void> {
-    const closePromises: Promise<void>[] = [];
+  const closePromises: Promise<void>[] = [];
 
-    for (const client of Object.values(clients)) {
-        if (client) {
-            closePromises.push(client.close().catch(() => {}));
-        }
+  for (const client of Object.values(clients)) {
+    if (client) {
+      closePromises.push(
+        client.close().catch(() => {
+          // Ignore errors during close
+        })
+      );
     }
+  }
 
-    await Promise.all(closePromises);
+  await Promise.all(closePromises);
 }
 
 // =============================================================================
@@ -641,29 +650,29 @@ export async function closeMCPClients(clients: MCPClients): Promise<void> {
 // =============================================================================
 
 export interface AgenticTaskOptions {
-    /** System prompt defining the AI's role and behavior */
-    systemPrompt: string;
-    /** User prompt with the actual task */
-    userPrompt: string;
-    /** MCP clients to enable */
-    mcpClients?: MCPClientOptions;
-    /** Maximum steps for the agentic loop (default: 15) */
-    maxSteps?: number;
-    /** Callback for each tool call */
-    onToolCall?: (toolName: string, args: unknown) => void;
-    /** Callback for each step completion */
-    onStepFinish?: (step: { text?: string; toolCalls?: unknown[] }) => void;
+  /** System prompt defining the AI's role and behavior */
+  systemPrompt: string;
+  /** User prompt with the actual task */
+  userPrompt: string;
+  /** MCP clients to enable */
+  mcpClients?: MCPClientOptions;
+  /** Maximum steps for the agentic loop (default: 15) */
+  maxSteps?: number;
+  /** Callback for each tool call */
+  onToolCall?: (toolName: string, args: unknown) => void;
+  /** Callback for each step completion */
+  onStepFinish?: (step: { text?: string; toolCalls?: unknown[] }) => void;
 }
 
 export interface AgenticTaskResult {
-    /** Final text response from the AI */
-    text: string;
-    /** Total number of tool calls made */
-    toolCallCount: number;
-    /** All steps in the agentic loop */
-    steps: unknown[];
-    /** Reason the loop finished */
-    finishReason: string;
+  /** Final text response from the AI */
+  text: string;
+  /** Total number of tool calls made */
+  toolCallCount: number;
+  /** All steps in the agentic loop */
+  steps: unknown[];
+  /** Reason the loop finished */
+  finishReason: string;
 }
 
 /**
@@ -685,70 +694,71 @@ export interface AgenticTaskResult {
  * });
  */
 export async function runAgenticTask(options: AgenticTaskOptions): Promise<AgenticTaskResult> {
-    const {
-        systemPrompt,
-        userPrompt,
-        mcpClients: clientOptions = { filesystem: true },
-        maxSteps = 15,
-        onToolCall,
-        onStepFinish,
-    } = options;
+  const {
+    systemPrompt,
+    userPrompt,
+    mcpClients: clientOptions = { filesystem: true },
+    maxSteps = 15,
+    onToolCall,
+    onStepFinish,
+  } = options;
 
-    // Initialize MCP clients
-    const clients = await initializeMCPClients(clientOptions);
+  // Initialize MCP clients
+  const clients = await initializeMCPClients(clientOptions);
 
-    try {
-        // Get all tools from all clients
-        const tools = await getAllTools(clients);
+  try {
+    // Get all tools from all clients
+    const tools = await getAllTools(clients);
 
-        if (Object.keys(tools).length === 0) {
-            throw new Error('No MCP tools available - check MCP server connections');
+    if (Object.keys(tools).length === 0) {
+      throw new Error('No MCP tools available - check MCP server connections');
+    }
+
+    const resolved = await resolveModel();
+
+    // Run the AI with multi-step tool support
+    const result = await generateText({
+      model: resolved.model,
+      system: systemPrompt,
+      prompt: userPrompt,
+      tools,
+      stopWhen: stepCountIs(maxSteps),
+      onStepFinish: (step) => {
+        // Track tool calls
+        if (step.toolCalls && onToolCall) {
+          for (const call of step.toolCalls) {
+            // The Vercel AI SDK's ToolCall type uses a generic for the tool name
+            // and arguments, but MCP tools have dynamic tool names that can't be
+            // known at compile time. We cast to any to access toolName/input/args
+            // properties that exist at runtime but aren't in the generic type.
+            // biome-ignore lint/suspicious/noExplicitAny: MCP tools have dynamic names
+            const tc = call as any;
+            onToolCall(tc.toolName, tc.input || tc.args);
+          }
         }
 
-        const resolved = await resolveModel();
-
-        // Run the AI with multi-step tool support
-        const result = await generateText({
-            model: resolved.model,
-            system: systemPrompt,
-            prompt: userPrompt,
-            tools,
-            stopWhen: stepCountIs(maxSteps),
-            onStepFinish: (step) => {
-                // Track tool calls
-                if (step.toolCalls && onToolCall) {
-                    for (const call of step.toolCalls) {
-                        // The Vercel AI SDK's ToolCall type uses a generic for the tool name
-                        // and arguments, but MCP tools have dynamic tool names that can't be
-                        // known at compile time. We cast to any to access toolName/input/args
-                        // properties that exist at runtime but aren't in the generic type.
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const tc = call as any;
-                        onToolCall(tc.toolName, tc.input || tc.args);
-                    }
-                }
-
-                // User callback
-                onStepFinish?.({
-                    text: step.text,
-                    toolCalls: step.toolCalls as unknown[],
-                });
-            },
+        // User callback
+        onStepFinish?.({
+          text: step.text,
+          toolCalls: step.toolCalls as unknown[],
         });
+      },
+    });
 
-        // Count total tool calls across all steps
-        const toolCallCount = result.steps?.reduce((acc, step) => acc + (step.toolCalls?.length || 0), 0) || 0;
+    // Count total tool calls across all steps
+    const toolCallCount =
+      result.steps?.reduce((acc, step) => acc + (step.toolCalls?.length || 0), 0) || 0;
 
-        return {
-            text: result.text,
-            toolCallCount,
-            steps: result.steps || [],
-            finishReason: result.finishReason,
-        };
-    } finally {
-        // ALWAYS close clients
-        await closeMCPClients(clients);
-    }
+    return {
+      text: result.text,
+      toolCallCount,
+      steps: result.steps || [],
+      finishReason: result.finishReason,
+    };
+  } finally {
+    // ALWAYS close clients
+    await closeMCPClients(clients);
+  }
 }
 
 // =============================================================================
@@ -759,52 +769,52 @@ export async function runAgenticTask(options: AgenticTaskOptions): Promise<Agent
  * Playwright tool names for reference
  */
 export const PLAYWRIGHT_TOOLS = {
-    NAVIGATE: 'browser_navigate',
-    CLICK: 'browser_click',
-    TYPE: 'browser_type',
-    SNAPSHOT: 'browser_snapshot',
-    SCREENSHOT: 'browser_take_screenshot',
-    CLOSE: 'browser_close',
-    WAIT: 'browser_wait_for',
-    EVALUATE: 'browser_evaluate',
-    VERIFY_ELEMENT_VISIBLE: 'browser_verify_element_visible',
-    VERIFY_TEXT_VISIBLE: 'browser_verify_text_visible',
-    VERIFY_VALUE: 'browser_verify_value',
-    GENERATE_LOCATOR: 'browser_generate_locator',
+  NAVIGATE: 'browser_navigate',
+  CLICK: 'browser_click',
+  TYPE: 'browser_type',
+  SNAPSHOT: 'browser_snapshot',
+  SCREENSHOT: 'browser_take_screenshot',
+  CLOSE: 'browser_close',
+  WAIT: 'browser_wait_for',
+  EVALUATE: 'browser_evaluate',
+  VERIFY_ELEMENT_VISIBLE: 'browser_verify_element_visible',
+  VERIFY_TEXT_VISIBLE: 'browser_verify_text_visible',
+  VERIFY_VALUE: 'browser_verify_value',
+  GENERATE_LOCATOR: 'browser_generate_locator',
 } as const;
 
 /**
  * Filesystem tool names for reference
  */
 export const FILESYSTEM_TOOLS = {
-    READ_FILE: 'read_file',
-    WRITE_FILE: 'write_file',
-    LIST_FILES: 'list_files',
-    SEARCH_FILES: 'search_files',
+  READ_FILE: 'read_file',
+  WRITE_FILE: 'write_file',
+  LIST_FILES: 'list_files',
+  SEARCH_FILES: 'search_files',
 } as const;
 
 /**
  * Context7 tool names for reference
  */
 export const CONTEXT7_TOOLS = {
-    /** Resolve library name to Context7 ID */
-    RESOLVE_LIBRARY_ID: 'resolve-library-id',
-    /** Get library documentation */
-    GET_LIBRARY_DOCS: 'get-library-docs',
+  /** Resolve library name to Context7 ID */
+  RESOLVE_LIBRARY_ID: 'resolve-library-id',
+  /** Get library documentation */
+  GET_LIBRARY_DOCS: 'get-library-docs',
 } as const;
 
 /**
  * Vite React tool names for reference
  */
 export const VITE_REACT_TOOLS = {
-    /** Highlight a React component */
-    HIGHLIGHT_COMPONENT: 'highlight-component',
-    /** Get component props, states, contexts */
-    GET_COMPONENT_STATES: 'get-component-states',
-    /** Get component tree */
-    GET_COMPONENT_TREE: 'get-component-tree',
-    /** Get unnecessary re-renders */
-    GET_UNNECESSARY_RERENDERS: 'get-unnecessary-rerenders',
+  /** Highlight a React component */
+  HIGHLIGHT_COMPONENT: 'highlight-component',
+  /** Get component props, states, contexts */
+  GET_COMPONENT_STATES: 'get-component-states',
+  /** Get component tree */
+  GET_COMPONENT_TREE: 'get-component-tree',
+  /** Get unnecessary re-renders */
+  GET_UNNECESSARY_RERENDERS: 'get-unnecessary-rerenders',
 } as const;
 
 /**
@@ -813,28 +823,28 @@ export const VITE_REACT_TOOLS = {
  * From @modelcontextprotocol/server-github
  */
 export const GITHUB_TOOLS = {
-    /** Post a comment on an issue or PR */
-    ADD_ISSUE_COMMENT: 'add_issue_comment',
-    /** Create a new issue */
-    CREATE_ISSUE: 'create_issue',
-    /** Get issue details */
-    GET_ISSUE: 'get_issue',
-    /** Update an issue */
-    UPDATE_ISSUE: 'update_issue',
-    /** Search issues */
-    SEARCH_ISSUES: 'search_issues',
-    /** Create a new pull request */
-    CREATE_PULL_REQUEST: 'create_pull_request',
-    /** Get pull request details */
-    GET_PULL_REQUEST: 'get_pull_request',
-    /** Get file contents from a repo */
-    GET_FILE_CONTENTS: 'get_file_contents',
-    /** Create or update a file */
-    CREATE_OR_UPDATE_FILE: 'create_or_update_file',
-    /** List commits */
-    LIST_COMMITS: 'list_commits',
-    /** Fork a repository */
-    FORK_REPOSITORY: 'fork_repository',
-    /** Create a branch */
-    CREATE_BRANCH: 'create_branch',
+  /** Post a comment on an issue or PR */
+  ADD_ISSUE_COMMENT: 'add_issue_comment',
+  /** Create a new issue */
+  CREATE_ISSUE: 'create_issue',
+  /** Get issue details */
+  GET_ISSUE: 'get_issue',
+  /** Update an issue */
+  UPDATE_ISSUE: 'update_issue',
+  /** Search issues */
+  SEARCH_ISSUES: 'search_issues',
+  /** Create a new pull request */
+  CREATE_PULL_REQUEST: 'create_pull_request',
+  /** Get pull request details */
+  GET_PULL_REQUEST: 'get_pull_request',
+  /** Get file contents from a repo */
+  GET_FILE_CONTENTS: 'get_file_contents',
+  /** Create or update a file */
+  CREATE_OR_UPDATE_FILE: 'create_or_update_file',
+  /** List commits */
+  LIST_COMMITS: 'list_commits',
+  /** Fork a repository */
+  FORK_REPOSITORY: 'fork_repository',
+  /** Create a branch */
+  CREATE_BRANCH: 'create_branch',
 } as const;

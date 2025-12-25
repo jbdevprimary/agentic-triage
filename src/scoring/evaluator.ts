@@ -10,13 +10,13 @@
  */
 
 import {
-    type ComplexityTier,
-    type ComplexityWeights,
-    calculateWeightedScore,
-    DEFAULT_THRESHOLDS,
-    DEFAULT_WEIGHTS,
-    scoreToTier,
-    type TierThresholds,
+  type ComplexityTier,
+  type ComplexityWeights,
+  calculateWeightedScore,
+  DEFAULT_THRESHOLDS,
+  DEFAULT_WEIGHTS,
+  scoreToTier,
+  type TierThresholds,
 } from './weights.js';
 
 // ============================================================================
@@ -27,29 +27,29 @@ import {
  * Raw dimension scores from evaluation (0-10 each)
  */
 export interface DimensionScores {
-    files_changed: number;
-    lines_changed: number;
-    dependency_depth: number;
-    test_coverage_need: number;
-    cross_module_impact: number;
-    semantic_complexity: number;
-    context_required: number;
-    risk_level: number;
-    [key: string]: number; // Allow custom dimensions
+  files_changed: number;
+  lines_changed: number;
+  dependency_depth: number;
+  test_coverage_need: number;
+  cross_module_impact: number;
+  semantic_complexity: number;
+  context_required: number;
+  risk_level: number;
+  [key: string]: number; // Allow custom dimensions
 }
 
 /**
  * Complete complexity score result
  */
 export interface ComplexityScore {
-    /** Raw scores for each dimension (0-10) */
-    raw: DimensionScores;
-    /** Weighted composite score (0-10) */
-    weighted: number;
-    /** Complexity tier based on thresholds */
-    tier: ComplexityTier;
-    /** AI's reasoning for the scores */
-    reasoning: string;
+  /** Raw scores for each dimension (0-10) */
+  raw: DimensionScores;
+  /** Weighted composite score (0-10) */
+  weighted: number;
+  /** Complexity tier based on thresholds */
+  tier: ComplexityTier;
+  /** AI's reasoning for the scores */
+  reasoning: string;
 }
 
 /**
@@ -62,12 +62,12 @@ export type LLMEvaluator = (prompt: string) => Promise<string>;
  * Configuration for complexity evaluation
  */
 export interface EvaluatorConfig {
-    /** Custom weights (defaults to DEFAULT_WEIGHTS) */
-    weights?: ComplexityWeights;
-    /** Custom tier thresholds (defaults to DEFAULT_THRESHOLDS) */
-    thresholds?: TierThresholds;
-    /** Maximum context length to send to LLM */
-    maxContextLength?: number;
+  /** Custom weights (defaults to DEFAULT_WEIGHTS) */
+  weights?: ComplexityWeights;
+  /** Custom tier thresholds (defaults to DEFAULT_THRESHOLDS) */
+  thresholds?: TierThresholds;
+  /** Maximum context length to send to LLM */
+  maxContextLength?: number;
 }
 
 // ============================================================================
@@ -79,7 +79,7 @@ export interface EvaluatorConfig {
  * This prompt is provider-agnostic - works with any LLM
  */
 export function generateEvaluationPrompt(task: string, context: string, maxContext = 8000): string {
-    return `You are a code complexity evaluator. Analyze this task and score each dimension 0-10.
+  return `You are a code complexity evaluator. Analyze this task and score each dimension 0-10.
 
 TASK:
 ${task}
@@ -135,58 +135,58 @@ Respond ONLY with valid JSON (no markdown, no explanation outside JSON):
  * Parse and validate LLM response into dimension scores
  */
 export function parseEvaluationResponse(
-    response: string,
-    weights: ComplexityWeights = DEFAULT_WEIGHTS
+  response: string,
+  weights: ComplexityWeights = DEFAULT_WEIGHTS
 ): { scores: DimensionScores; reasoning: string } {
-    // Try to extract JSON from response (handle markdown code blocks)
-    let json = response;
-    const jsonMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-        json = jsonMatch[1];
-    }
+  // Try to extract JSON from response (handle markdown code blocks)
+  let json = response;
+  const jsonMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonMatch) {
+    json = jsonMatch[1];
+  }
 
-    const parsed = JSON.parse(json.trim());
+  const parsed = JSON.parse(json.trim());
 
-    // Validate and clamp scores to 0-10
-    const scores: DimensionScores = {
-        files_changed: 0,
-        lines_changed: 0,
-        dependency_depth: 0,
-        test_coverage_need: 0,
-        cross_module_impact: 0,
-        semantic_complexity: 0,
-        context_required: 0,
-        risk_level: 0,
-    };
+  // Validate and clamp scores to 0-10
+  const scores: DimensionScores = {
+    files_changed: 0,
+    lines_changed: 0,
+    dependency_depth: 0,
+    test_coverage_need: 0,
+    cross_module_impact: 0,
+    semantic_complexity: 0,
+    context_required: 0,
+    risk_level: 0,
+  };
 
-    for (const key of Object.keys(weights)) {
-        const val = Number(parsed[key]) || 0;
-        scores[key] = Math.max(0, Math.min(10, val));
-    }
+  for (const key of Object.keys(weights)) {
+    const val = Number(parsed[key]) || 0;
+    scores[key] = Math.max(0, Math.min(10, val));
+  }
 
-    return {
-        scores,
-        reasoning: parsed.reasoning || 'No reasoning provided',
-    };
+  return {
+    scores,
+    reasoning: parsed.reasoning || 'No reasoning provided',
+  };
 }
 
 /**
  * Calculate complexity score from parsed dimension scores
  */
 export function calculateComplexity(
-    scores: DimensionScores,
-    config: EvaluatorConfig = {}
+  scores: DimensionScores,
+  config: EvaluatorConfig = {}
 ): Omit<ComplexityScore, 'reasoning'> {
-    const { weights = DEFAULT_WEIGHTS, thresholds = DEFAULT_THRESHOLDS } = config;
+  const { weights = DEFAULT_WEIGHTS, thresholds = DEFAULT_THRESHOLDS } = config;
 
-    const weighted = calculateWeightedScore(scores, weights);
-    const tier = scoreToTier(weighted, thresholds);
+  const weighted = calculateWeightedScore(scores, weights);
+  const tier = scoreToTier(weighted, thresholds);
 
-    return {
-        raw: scores,
-        weighted,
-        tier,
-    };
+  return {
+    raw: scores,
+    weighted,
+    tier,
+  };
 }
 
 /**
@@ -209,20 +209,20 @@ export function calculateComplexity(
  * ```
  */
 export async function evaluateComplexity(
-    llm: LLMEvaluator,
-    task: string,
-    context: string,
-    config: EvaluatorConfig = {}
+  llm: LLMEvaluator,
+  task: string,
+  context: string,
+  config: EvaluatorConfig = {}
 ): Promise<ComplexityScore> {
-    const prompt = generateEvaluationPrompt(task, context, config.maxContextLength);
-    const response = await llm(prompt);
-    const { scores, reasoning } = parseEvaluationResponse(response, config.weights);
-    const result = calculateComplexity(scores, config);
+  const prompt = generateEvaluationPrompt(task, context, config.maxContextLength);
+  const response = await llm(prompt);
+  const { scores, reasoning } = parseEvaluationResponse(response, config.weights);
+  const result = calculateComplexity(scores, config);
 
-    return {
-        ...result,
-        reasoning,
-    };
+  return {
+    ...result,
+    reasoning,
+  };
 }
 
 // ============================================================================
@@ -234,40 +234,40 @@ export async function evaluateComplexity(
  * Useful when LLM is unavailable or for fast pre-filtering
  */
 export function estimateComplexityHeuristic(
-    options: {
-        filesChanged?: number;
-        linesChanged?: number;
-        hasTests?: boolean;
-        isRefactor?: boolean;
-        hasDependencyChanges?: boolean;
-        isCriticalPath?: boolean;
-    },
-    config: EvaluatorConfig = {}
+  options: {
+    filesChanged?: number;
+    linesChanged?: number;
+    hasTests?: boolean;
+    isRefactor?: boolean;
+    hasDependencyChanges?: boolean;
+    isCriticalPath?: boolean;
+  },
+  config: EvaluatorConfig = {}
 ): ComplexityScore {
-    const {
-        filesChanged = 1,
-        linesChanged = 10,
-        hasTests = true,
-        isRefactor = false,
-        hasDependencyChanges = false,
-        isCriticalPath = false,
-    } = options;
+  const {
+    filesChanged = 1,
+    linesChanged = 10,
+    hasTests = true,
+    isRefactor = false,
+    hasDependencyChanges = false,
+    isCriticalPath = false,
+  } = options;
 
-    const scores: DimensionScores = {
-        files_changed: Math.min(10, filesChanged),
-        lines_changed: Math.min(10, Math.log10(linesChanged + 1) * 3),
-        dependency_depth: hasDependencyChanges ? 6 : isRefactor ? 4 : 2,
-        test_coverage_need: hasTests ? 3 : 6,
-        cross_module_impact: filesChanged > 5 ? 7 : filesChanged > 2 ? 4 : 1,
-        semantic_complexity: isRefactor ? 6 : 3,
-        context_required: filesChanged > 3 ? 6 : 3,
-        risk_level: isCriticalPath ? 8 : isRefactor ? 5 : 2,
-    };
+  const scores: DimensionScores = {
+    files_changed: Math.min(10, filesChanged),
+    lines_changed: Math.min(10, Math.log10(linesChanged + 1) * 3),
+    dependency_depth: hasDependencyChanges ? 6 : isRefactor ? 4 : 2,
+    test_coverage_need: hasTests ? 3 : 6,
+    cross_module_impact: filesChanged > 5 ? 7 : filesChanged > 2 ? 4 : 1,
+    semantic_complexity: isRefactor ? 6 : 3,
+    context_required: filesChanged > 3 ? 6 : 3,
+    risk_level: isCriticalPath ? 8 : isRefactor ? 5 : 2,
+  };
 
-    const result = calculateComplexity(scores, config);
+  const result = calculateComplexity(scores, config);
 
-    return {
-        ...result,
-        reasoning: 'Heuristic estimation (no LLM evaluation)',
-    };
+  return {
+    ...result,
+    reasoning: 'Heuristic estimation (no LLM evaluation)',
+  };
 }
