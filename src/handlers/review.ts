@@ -9,15 +9,15 @@ import { codeReviewSchema } from '../schemas/index.js';
  * @returns The structured review result
  */
 export async function reviewCode(code: string, model: LanguageModel) {
-    if (!code) {
-        throw new Error('Code or diff is required');
-    }
+  if (!code) {
+    throw new Error('Code or diff is required');
+  }
 
-    const result = await generateObject({
-        model,
-        schema: codeReviewSchema,
-        prompt: `Review the following code or diff and provide a summary and specific comments:\n\n${code}`,
-    });
+  const result = await generateObject({
+    model,
+    schema: codeReviewSchema,
+    prompt: `Review the following code or diff and provide a summary and specific comments:\n\n${code}`,
+  });
 
-    return result.object;
+  return result.object;
 }

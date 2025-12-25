@@ -9,15 +9,15 @@ import { triageAnalysisSchema } from '../schemas/index.js';
  * @returns The structured triage result
  */
 export async function triageItem(content: string, model: LanguageModel) {
-    if (!content) {
-        throw new Error('Content is required');
-    }
+  if (!content) {
+    throw new Error('Content is required');
+  }
 
-    const result = await generateObject({
-        model,
-        schema: triageAnalysisSchema,
-        prompt: `Perform a triage analysis of the following item (issue or pull request). Provide issue analysis, code review (if applicable), and an overall triage assessment:\n\n${content}`,
-    });
+  const result = await generateObject({
+    model,
+    schema: triageAnalysisSchema,
+    prompt: `Perform a triage analysis of the following item (issue or pull request). Provide issue analysis, code review (if applicable), and an overall triage assessment:\n\n${content}`,
+  });
 
-    return result.object;
+  return result.object;
 }

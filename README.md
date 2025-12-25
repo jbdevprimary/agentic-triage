@@ -95,6 +95,7 @@ const issue = await triage.issues.create({
   body: 'Users cannot login with SSO',
   type: 'bug',
   priority: 'critical',
+  labels: ['bug', 'critical']
 });
 await triage.issues.addLabels(issue.id, ['needs-triage', 'auth']);
 await triage.issues.close(issue.id, 'Fixed in PR #123');
@@ -164,7 +165,7 @@ const beads = new TriageConnectors({
 │  │ SDK Tools  │  │             │  │            │          │
 │  └─────┬──────┘  └──────┬──────┘  └─────┬──────┘          │
 │        │                │               │                  │
-└────────┼────────────────┼───────────────┼──────────────────┘
+│└────────┼────────────────┼───────────────┼──────────────────┘
          │                │               │
          ▼                ▼               ▼
     AI Agents        MCP Clients     Applications
@@ -222,9 +223,20 @@ pnpm run test:coverage
 # Build
 pnpm run build
 
-# Lint
+# Lint and Format
 pnpm run check
+pnpm run check:fix
+
+# Generate Documentation
+pnpm run docs
 ```
+
+## Examples
+
+Basic usage examples can be found in the [examples/](./examples/) directory:
+
+- [Basic Triage Analysis](./examples/basic-triage.ts) - Using analyzeIssue handler
+- [List Available Tools](./examples/list-tools.ts) - Retrieving triage tools
 
 ## Related Projects
 
