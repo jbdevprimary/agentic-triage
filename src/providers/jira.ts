@@ -216,7 +216,7 @@ export class JiraProvider implements TriageProvider {
             blocked: 0,
             closed: 0,
             byPriority: { critical: 0, high: 0, medium: 0, low: 0, backlog: 0 },
-            byType: { bug: 0, feature: 0, task: 0, epic: 0, chore: 0 },
+            byType: { bug: 0, feature: 0, task: 0, epic: 0, chore: 0, docs: 0 },
         };
 
         for (const issue of issues) {

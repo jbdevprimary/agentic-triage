@@ -1,5 +1,5 @@
 import { generateObject, type LanguageModel } from 'ai';
-import { triageAnalysisSchema } from '../schemas/index.js';
+import { triageAnalysisSchema } from '../schemas/triage.js';
 
 /**
  * Triage an issue or pull request using the provided language model.

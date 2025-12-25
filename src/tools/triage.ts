@@ -1,7 +1,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { getPullRequest } from '../octokit.js';
-import { getTriageConnectors } from '../triage/index.js';
+import { TriageConnectors } from '../triage/index.js';
 
 export const triageTool = tool({
     description: 'Perform a triage analysis of an issue or pull request.',
@@ -11,7 +11,7 @@ export const triageTool = tool({
     }),
     execute: async ({ id, type }: { id: string | number; type: 'issue' | 'pull-request' }) => {
         if (type === 'issue') {
-            const connectors = getTriageConnectors();
+            const connectors = new TriageConnectors();
             const issue = await connectors.issues.get(String(id));
             return {
                 id: issue?.id,

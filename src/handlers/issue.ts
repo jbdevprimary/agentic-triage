@@ -1,6 +1,6 @@
 import { generateObject, type LanguageModel } from 'ai';
 import type { ListIssuesOptions } from '../providers/types.js';
-import { issueAnalysisSchema } from '../schemas/index.js';
+import { IssueTriageSchema } from '../schemas/index.js';
 import type { IssueTriage } from '../schemas/issue.js';
 import type { TriageConnectors } from '../triage/connectors.js';
 import { getConnectors } from './connectors.js';
@@ -78,7 +78,7 @@ export async function analyzeIssue(issueBody: string, model: LanguageModel) {
 
     const result = await generateObject({
         model,
-        schema: issueAnalysisSchema,
+        schema: IssueTriageSchema,
         prompt: `Analyze the following issue and provide a summary, impact, and suggestions:\n\n${issueBody}`,
     });
 

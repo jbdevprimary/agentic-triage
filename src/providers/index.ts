@@ -1,6 +1,5 @@
 /**
  * Triage Providers
-<<<<<<< HEAD
  *
  * Multi-provider abstraction for issue tracking systems.
  * Similar to how AI providers work,
@@ -9,25 +8,8 @@
  * Supported Providers:
  * - GitHub Issues (github)
  * - Beads Issue Tracker (beads) - local-first, AI-native
- * - Jira (jira) - coming soon
- * - Linear (linear) - coming soon
- *
- * @example
- * ```typescript
- * import { createProvider, getProvider } from 'agentic-triage/providers';
- *
- * // Create a GitHub provider
- * const github = createProvider({ type: 'github', repo: 'owner/repo' });
- *
- * // Create a Beads provider
- * const beads = createProvider({ type: 'beads', workingDir: '/path/to/project' });
- *
- * // Use the unified interface
- * const issues = await github.listIssues({ status: 'open' });
- * const ready = await beads.getReadyWork({ limit: 10 });
- * ```
-=======
->>>>>>> origin/main
+ * - Jira (jira)
+ * - Linear (linear)
  */
 
 export { BeadsProvider } from './beads.js';
@@ -39,7 +21,7 @@ export * from './types.js';
 import { BeadsProvider } from './beads.js';
 import { GitHubProvider } from './github.js';
 import { JiraProvider } from './jira.js';
-import { type LinearConfig, LinearProvider } from './linear.js';
+import { LinearProvider } from './linear.js';
 import type { ProviderConfig, TriageProvider } from './types.js';
 
 /**
@@ -58,7 +40,7 @@ export function createProvider(config: ProviderConfig | any): TriageProvider {
             return new LinearProvider(config.linear || config);
 
         case 'beads':
-            return new BeadsProvider(config.beads || config);
+            return new BeadsProvider();
 
         default:
             throw new Error(`Unknown provider type: ${type}`);
@@ -68,7 +50,11 @@ export function createProvider(config: ProviderConfig | any): TriageProvider {
 /**
  * Detect and create the best provider based on environment
  */
-export async function createBestProvider(options: { repo?: string } = {}): Promise<TriageProvider> {
+export async function createBestProvider(
+    options: { repo?: string; workingDir?: string; preferBeads?: boolean } = {}
+): Promise<TriageProvider> {
+    const workingDir = options.workingDir || process.cwd();
+
     if (options.repo) {
         return new GitHubProvider({ type: 'github', repo: options.repo });
     }
@@ -79,7 +65,6 @@ export async function createBestProvider(options: { repo?: string } = {}): Promi
         return new GitHubProvider({ type: 'github', repo });
     }
 
-<<<<<<< HEAD
     // Try to detect repo from git remote
     try {
         const { execFileSync } = await import('node:child_process');
@@ -98,29 +83,39 @@ export async function createBestProvider(options: { repo?: string } = {}): Promi
         // Not a git repo or no remote
     }
 
-    // Check Beads as last resort even if not preferred
-    if (!preferBeads) {
-        try {
-            const { isBeadsInstalled, isBeadsInitialized } = await import('./beads.js');
-            if (isBeadsInstalled() && isBeadsInitialized(workingDir)) {
-                return new BeadsProvider({ type: 'beads', workingDir });
-            }
-        } catch {
-            // Beads not available
-        }
-    }
-
-    throw new Error(
-        'No triage provider available. Options:\n' +
-            '  1. Initialize Beads: bd init\n' +
-            '  2. Authenticate GitHub: gh auth login\n' +
-            '  3. Provide repo explicitly: createProvider({ type: "github", repo: "owner/repo" })'
-    );
+    throw new Error('Could not auto-detect provider. Please provide configuration.');
 }
 
-// =============================================================================
-// Utility Functions
-// =============================================================================
+// Registry for multi-provider support
+const providerRegistry = new Map<string, TriageProvider>();
+
+/**
+ * Register a provider instance
+ */
+export function registerProvider(name: string, provider: TriageProvider): void {
+    providerRegistry.set(name, provider);
+}
+
+/**
+ * Get a registered provider
+ */
+export function getProvider(name: string): TriageProvider | undefined {
+    return providerRegistry.get(name);
+}
+
+/**
+ * Get all registered providers
+ */
+export function getAllProviders(): TriageProvider[] {
+    return Array.from(providerRegistry.values());
+}
+
+/**
+ * Clear all registered providers
+ */
+export function clearProviders(): void {
+    providerRegistry.clear();
+}
 
 /**
  * Sync all registered providers (for distributed providers like Beads)
@@ -180,7 +175,4 @@ export async function getCombinedStats(): Promise<{
     }
 
     return { providers, total };
-=======
-    throw new Error('Could not auto-detect provider. Please provide configuration.');
->>>>>>> origin/main
 }

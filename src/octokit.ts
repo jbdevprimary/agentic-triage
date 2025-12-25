@@ -202,7 +202,10 @@ export function getOctokit(): never {
 /**
  * Get issue details via MCP
  */
-export async function getIssue(issueNumber: number, repoContext?: { owner: string; repo: string }): Promise<{
+export async function getIssue(
+    issueNumber: number,
+    repoContext?: { owner: string; repo: string }
+): Promise<{
     number: number;
     title: string;
     body: string;
@@ -257,12 +260,15 @@ export async function createIssueComment(issueNumber: number, body: string): Pro
 /**
  * Create an issue via MCP
  */
-export async function createIssue(issue: {
-    title: string;
-    body: string;
-    labels?: string[];
-    assignees?: string[];
-}, repoContext?: { owner: string; repo: string }): Promise<{ number: number }> {
+export async function createIssue(
+    issue: {
+        title: string;
+        body: string;
+        labels?: string[];
+        assignees?: string[];
+    },
+    repoContext?: { owner: string; repo: string }
+): Promise<{ number: number }> {
     const { owner, repo } = repoContext || getRepoContext();
     const result = (await callGitHubTool('create_issue', {
         owner,
@@ -318,7 +324,10 @@ export async function commentOnPR(prNumber: number, body: string): Promise<void>
  * Note: This may not work with GitHub App tokens that have limited scopes.
  * Prefer searchIssuesGraphQL for better compatibility.
  */
-export async function searchIssues(query: string, repoContext?: { owner: string; repo: string }): Promise<
+export async function searchIssues(
+    query: string,
+    repoContext?: { owner: string; repo: string }
+): Promise<
     Array<{
         number: number;
         title: string;

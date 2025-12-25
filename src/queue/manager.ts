@@ -6,7 +6,7 @@
  */
 
 import type { QueueStorage } from './storage.js';
-import type { Priority, QueueItem, QueueItemStatus, QueueState, QueueStats } from './types.js';
+import type { QueueItem, QueueItemStatus, QueueState, QueueStats } from './types.js';
 
 /**
  * Configuration for the queue manager

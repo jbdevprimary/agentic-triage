@@ -3,9 +3,7 @@ import {
     type CreateIssueOptions,
     type IssuePriority,
     type IssueStatus,
-    type IssueType,
     type ListIssuesOptions,
-    normalizePriority,
     normalizeStatus,
     normalizeType,
     type ProviderStats,
@@ -251,12 +249,12 @@ export class LinearProvider implements TriageProvider {
         return this.listIssues({ status: 'blocked' });
     }
 
-    async addLabels(id: string, labels: string[]): Promise<void> {
+    async addLabels(_id: string, _labels: string[]): Promise<void> {
         // Linear uses labelIds. This would require mapping names to IDs.
         // For now, this is a placeholder.
     }
 
-    async removeLabels(id: string, labels: string[]): Promise<void> {
+    async removeLabels(_id: string, _labels: string[]): Promise<void> {
         // Placeholder
     }
 
@@ -269,7 +267,7 @@ export class LinearProvider implements TriageProvider {
             blocked: 0,
             closed: 0,
             byPriority: { critical: 0, high: 0, medium: 0, low: 0, backlog: 0 },
-            byType: { bug: 0, feature: 0, task: 0, epic: 0, chore: 0 },
+            byType: { bug: 0, feature: 0, task: 0, epic: 0, chore: 0, docs: 0 },
         };
 
         for (const issue of issues) {

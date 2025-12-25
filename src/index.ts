@@ -5,11 +5,7 @@
  * the entire development lifecycle:
  *
  * - **Issue Triage**: AI-powered assessment, labeling, and planning
- * - **Code Development**: Automated implementation from issues
- * - **Testing**: Test generation, execution, and failure diagnosis
  * - **Code Review**: AI-driven PR reviews and feedback handling
- * - **Security**: CodeQL analysis, custom scanning, SARIF generation
- * - **Releases**: Conventional commits, changelog, versioning, npm publish
  * - **Sprint Planning**: Weighted prioritization, backlog balancing
  *
  * @example SDK Usage
@@ -115,55 +111,6 @@ export {
 } from './octokit.js';
 
 // ============================================================================
-// CLI Commands
-// ============================================================================
-
-export {
-    type AssessOptions,
-    type AutomergeOptions,
-    assess,
-    autoLabel,
-    automerge,
-    type CascadeCommandOptions,
-    type CoverageOptions,
-    cascade,
-    coverage,
-    type DevelopOptions,
-    type DiagnoseOptions,
-    develop,
-    diagnose,
-    type GenerateOptions,
-    generateTests,
-    type LabelOptions,
-    type PlanOptions,
-    plan,
-    type ReviewOptions,
-    type RoadmapCommandOptions,
-    review,
-    roadmap,
-    type SecurityOptions,
-    type SprintCommandOptions,
-    security,
-    sprint,
-    type TestOptions,
-    test,
-    type VerifyOptions,
-    verify,
-} from './commands/index.js';
-
-// ============================================================================
-// Sprint Planning
-// ============================================================================
-
-export * from './planning/index.js';
-
-// ============================================================================
-// Execution Framework
-// ============================================================================
-
-export * from './execution/index.js';
-
-// ============================================================================
 // Test Results
 // ============================================================================
 
@@ -191,12 +138,9 @@ export {
     type BeadsProviderConfig,
     type CreateIssueOptions,
     clearProviders,
-    createBeadsProvider,
     createBestProvider,
-    createGitHubProvider,
     createProvider,
     type DependencyType,
-    detectProviders,
     GitHubProvider,
     type GitHubProviderConfig,
     getAllProviders,
@@ -206,8 +150,6 @@ export {
     type IssuePriority,
     type IssueStatus,
     type IssueType,
-    isBeadsInitialized,
-    isBeadsInstalled,
     type JiraProviderConfig,
     type LinearProviderConfig,
     type ListIssuesOptions,

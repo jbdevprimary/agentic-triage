@@ -7,7 +7,6 @@ import {
     type CreateIssueOptions,
     type GitHubProviderConfig,
     type IssuePriority,
-    type IssueStatus,
     type IssueType,
     type ListIssuesOptions,
     normalizePriority,
@@ -180,26 +179,12 @@ export class GitHubProvider implements TriageProvider {
             blocked: issues.filter((i) => i.status === 'blocked').length,
             closed: issues.filter((i) => i.status === 'closed').length,
             byPriority: { critical: 0, high: 0, medium: 0, low: 0, backlog: 0 },
-            byType: { bug: 0, feature: 0, task: 0, epic: 0, chore: 0 },
-        };
-<<<<<<< HEAD
-        const byType: Record<IssueType, number> = {
-            bug: 0,
-            feature: 0,
-            task: 0,
-            epic: 0,
-            chore: 0,
-            docs: 0,
+            byType: { bug: 0, feature: 0, task: 0, epic: 0, chore: 0, docs: 0 },
         };
 
-        for (const issue of all) {
-            byPriority[issue.priority]++;
-            byType[issue.type]++;
-=======
         for (const issue of issues) {
             stats.byPriority[issue.priority]++;
             stats.byType[issue.type]++;
->>>>>>> origin/main
         }
         return stats;
     }
