@@ -6,9 +6,9 @@ export interface TriageIssue {
     id: string;
     title: string;
     body: string;
-    status: string;
-    priority?: string;
-    type?: string;
+    status: IssueStatus;
+    priority?: IssuePriority;
+    type?: IssueType;
     labels: string[];
     assignee?: string;
     url?: string;

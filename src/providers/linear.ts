@@ -17,6 +17,12 @@ export class LinearProvider implements TriageProvider {
     private teamId: string;
 
     constructor(config: LinearConfig) {
+        if (!config.apiKey || !config.apiKey.startsWith('lin_api_')) {
+            throw new Error('Invalid Linear API key. Must start with lin_api_');
+        }
+        if (!config.teamId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(config.teamId)) {
+            throw new Error('Invalid Linear team ID. Must be a valid UUID');
+        }
         this.client = new LinearClient({ apiKey: config.apiKey });
         this.teamId = config.teamId;
     }
@@ -37,9 +43,9 @@ export class LinearProvider implements TriageProvider {
             id: issue.id,
             title: issue.title,
             body: issue.description || '',
-            status: state?.name || 'unknown',
+            status: (state?.name || 'unknown') as IssueStatus,
             priority: this.mapPriorityFromLinear(issue.priority),
-            type: typeLabel?.toLowerCase(),
+            type: typeLabel?.toLowerCase() as IssueType,
             labels: labelNames,
             assignee: assignee?.name,
             url: issue.url,
@@ -66,6 +72,16 @@ export class LinearProvider implements TriageProvider {
         }
     }
 
+    private mapStatusToLinear(status?: IssueStatus): string | undefined {
+        switch (status) {
+            case 'open': return 'Todo';
+            case 'in_progress': return 'In Progress';
+            case 'blocked': return 'Blocked';
+            case 'closed': return 'Done';
+            default: return undefined;
+        }
+    }
+
     async listIssues(filters?: {
         status?: IssueStatus;
         priority?: IssuePriority;
@@ -77,7 +93,7 @@ export class LinearProvider implements TriageProvider {
         const issues = await this.client.issues({
             filter: {
                 team: { id: { eq: this.teamId } },
-                ...(filters?.status && { state: { name: { eq: filters.status } } }),
+                ...(filters?.status && { state: { name: { eq: this.mapStatusToLinear(filters.status) } } }),
                 ...(filters?.priority && { priority: { eq: this.mapPriorityToLinear(filters.priority) } }),
             },
             first: filters?.limit || 50,
@@ -105,14 +121,15 @@ export class LinearProvider implements TriageProvider {
         const labels = [...(issue.labels || [])];
         if (issue.type) labels.push(issue.type);
 
-        // Linear needs label IDs usually, but let's see if it handles names or if we need to fetch them
-        // For simplicity in this first version, we'll focus on title/body/team
+        // Linear needs label IDs usually. For now we just create the issue.
+        // If we wanted to support label names, we'd need to fetch or create them.
         
         const response = await this.client.createIssue({
             teamId: this.teamId,
             title: issue.title,
             description: issue.body,
             priority: this.mapPriorityToLinear(issue.priority),
+            // labelIds: ... we need IDs here
         });
 
         const newIssue = await response.issue;
@@ -127,6 +144,7 @@ export class LinearProvider implements TriageProvider {
         const response = await this.client.updateIssue(id, {
             title: updates.title,
             description: updates.body,
+            priority: updates.priority ? this.mapPriorityToLinear(updates.priority) : undefined,
             // mapping back other fields if needed
         });
 

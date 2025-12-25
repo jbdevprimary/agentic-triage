@@ -202,14 +202,14 @@ export function getOctokit(): never {
 /**
  * Get issue details via MCP
  */
-export async function getIssue(issueNumber: number): Promise<{
+export async function getIssue(issueNumber: number, repoContext?: { owner: string; repo: string }): Promise<{
     number: number;
     title: string;
     body: string;
     state: string;
     labels: string[];
 }> {
-    const { owner, repo } = getRepoContext();
+    const { owner, repo } = repoContext || getRepoContext();
     const result = (await callGitHubTool('get_issue', {
         owner,
         repo,
@@ -262,8 +262,8 @@ export async function createIssue(issue: {
     body: string;
     labels?: string[];
     assignees?: string[];
-}): Promise<{ number: number }> {
-    const { owner, repo } = getRepoContext();
+}, repoContext?: { owner: string; repo: string }): Promise<{ number: number }> {
+    const { owner, repo } = repoContext || getRepoContext();
     const result = (await callGitHubTool('create_issue', {
         owner,
         repo,
@@ -283,9 +283,10 @@ export async function updateIssue(
         state?: 'open' | 'closed';
         labels?: string[];
         assignees?: string[];
-    }
+    },
+    repoContext?: { owner: string; repo: string }
 ): Promise<void> {
-    const { owner, repo } = getRepoContext();
+    const { owner, repo } = repoContext || getRepoContext();
     await callGitHubTool('update_issue', {
         owner,
         repo,
@@ -317,7 +318,7 @@ export async function commentOnPR(prNumber: number, body: string): Promise<void>
  * Note: This may not work with GitHub App tokens that have limited scopes.
  * Prefer searchIssuesGraphQL for better compatibility.
  */
-export async function searchIssues(query: string): Promise<
+export async function searchIssues(query: string, repoContext?: { owner: string; repo: string }): Promise<
     Array<{
         number: number;
         title: string;
@@ -327,13 +328,13 @@ export async function searchIssues(query: string): Promise<
 > {
     // Try GraphQL first (more reliable with GitHub App tokens)
     try {
-        return await searchIssuesGraphQL(query);
+        return await searchIssuesGraphQL(query, {}, repoContext);
     } catch (error) {
         // Fall back to REST API, but log the GraphQL error for debugging
         console.warn('GraphQL search failed, falling back to REST API. Error:', error);
     }
 
-    const { owner, repo } = getRepoContext();
+    const { owner, repo } = repoContext || getRepoContext();
     const fullQuery = `repo:${owner}/${repo} ${query}`;
 
     const result = (await callGitHubTool('search_issues', {
@@ -362,7 +363,8 @@ export async function searchIssues(query: string): Promise<
  */
 export async function searchIssuesGraphQL(
     query: string,
-    options: { first?: number; includeBody?: boolean } = {}
+    options: { first?: number; includeBody?: boolean } = {},
+    repoContext?: { owner: string; repo: string }
 ): Promise<
     Array<{
         number: number;
@@ -372,7 +374,7 @@ export async function searchIssuesGraphQL(
         body?: string;
     }>
 > {
-    const { owner, repo } = getRepoContext();
+    const { owner, repo } = repoContext || getRepoContext();
     const { first = 100, includeBody = false } = options;
 
     // Parse query for state filter

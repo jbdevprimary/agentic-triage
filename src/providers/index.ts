@@ -12,7 +12,14 @@ import { GitHubProvider } from './github.js';
 import { JiraProvider } from './jira.js';
 import { LinearProvider, type LinearConfig } from './linear.js';
 import { BeadsProvider } from './beads.js';
-import type { ProviderConfig, TriageProvider } from './types.js';
+import type { 
+    ProviderConfig, 
+    TriageProvider,
+    TriageIssue,
+    IssueStatus,
+    IssuePriority,
+    IssueType
+} from './types.js';
 
 /**
  * Create a triage provider from configuration
@@ -80,7 +87,14 @@ export class TriageConnectors {
     }
 
     // Proxy methods for convenience
-    async listIssues(filters?: any) {
+    async listIssues(filters?: {
+        status?: IssueStatus;
+        priority?: IssuePriority;
+        type?: IssueType;
+        labels?: string[];
+        limit?: number;
+        assignee?: string;
+    }) {
         return this.provider.listIssues(filters);
     }
 
@@ -88,11 +102,18 @@ export class TriageConnectors {
         return this.provider.getIssue(id);
     }
 
-    async createIssue(issue: any) {
+    async createIssue(issue: {
+        title: string;
+        body?: string;
+        type?: IssueType;
+        priority?: IssuePriority;
+        labels?: string[];
+        assignee?: string;
+    }) {
         return this.provider.createIssue(issue);
     }
 
-    async updateIssue(id: string, updates: any) {
+    async updateIssue(id: string, updates: Partial<TriageIssue>) {
         return this.provider.updateIssue(id, updates);
     }
 
