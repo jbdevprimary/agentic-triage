@@ -95,7 +95,11 @@ jobs:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
 
       - name: Post Review Comment
+<<<<<<< HEAD
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+=======
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+>>>>>>> origin/main
         with:
           script: |
             const review = `${{ steps.review.outputs.response }}`;
@@ -186,7 +190,11 @@ jobs:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
 
       - name: Post Review Comment
+<<<<<<< HEAD
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+=======
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+>>>>>>> origin/main
         with:
           script: |
             const review = `${{ steps.review.outputs.response }}`;

@@ -21,7 +21,7 @@ To migrate:
 2. Update your imports:
    ```typescript
    // Old
-   import { getTriageTools } from '@agentic/triage';
+   import { getTriageTools } from 'agentic-triage';
    // New
    import { getTriageTools } from '@agentic/triage';
    ```
@@ -113,11 +113,11 @@ const issue = await triage.issues.create({
 await triage.issues.addLabels(issue.id, ['needs-triage', 'auth']);
 await triage.issues.close(issue.id, 'Fixed in PR #123');
 
-// Project operations (coming soon)
-const sprints = await triage.projects.listSprints();
+// Project operations
+const sprints = await triage.projects.getSprints();
 const currentSprint = await triage.projects.getCurrentSprint();
 
-// Review operations (coming soon)
+// Review operations
 const comments = await triage.reviews.getPRComments(144);
 ```
 
@@ -127,8 +127,8 @@ const comments = await triage.reviews.getPRComments(144);
 |----------|--------|----------|
 | **GitHub Issues** | ✅ Complete | GitHub-native projects |
 | **Beads** | ✅ Complete | Local-first, AI-native issue tracking |
-| **Jira** | 🔜 Planned | Enterprise projects |
-| **Linear** | 🔜 Planned | Modern team workflows |
+| **Jira** | ✅ Complete | Enterprise projects |
+| **Linear** | ✅ Complete | Modern team workflows |
 
 ### Auto-Detection
 
@@ -139,7 +139,7 @@ The provider is auto-detected based on environment:
 ### Explicit Configuration
 
 ```typescript
-import { TriageConnectors } from 'agentic-triage';
+import { TriageConnectors } from '@agentic/triage';
 
 // GitHub
 const github = new TriageConnectors({
@@ -150,47 +150,9 @@ const github = new TriageConnectors({
 // Beads
 const beads = new TriageConnectors({
   provider: 'beads',
-  beads: { rootDir: '/path/to/project' }
+  beads: { workingDir: '/path/to/project' }
 });
 ```
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      agentic-triage                         │
-│                                                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │ GitHub      │  │ Beads       │  │ Jira/Linear         │ │
-│  │ Provider    │  │ Provider    │  │ (coming soon)       │ │
-│  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘ │
-│         └────────────────┼────────────────────┘            │
-│                          ▼                                  │
-│              ┌───────────────────────┐                     │
-│              │   TriageConnectors    │                     │
-│              │   (Unified API)       │                     │
-│              └───────────┬───────────┘                     │
-│                          │                                  │
-│         ┌────────────────┼────────────────┐                │
-│         ▼                ▼                ▼                │
-│  ┌────────────┐  ┌─────────────┐  ┌────────────┐          │
-│  │ Vercel AI  │  │ MCP Server  │  │ Direct API │          │
-│  │ SDK Tools  │  │             │  │            │          │
-│  └─────┬──────┘  └──────┬──────┘  └─────┬──────┘          │
-│        │                │               │                  │
-└────────┼────────────────┼───────────────┼──────────────────┘
-         │                │               │
-         ▼                ▼               ▼
-    AI Agents        MCP Clients     Applications
-    (agentic-       (Claude,         (Scripts,
-     control)        Cursor)          Services)
-```
-
-## Consumers
-
-- Any Vercel AI SDK application
-- Any MCP-compatible client (Claude Desktop, Cursor, etc.)
-- Direct TypeScript/JavaScript applications
 
 ## CLI (Development & Testing)
 
@@ -198,13 +160,10 @@ The CLI is primarily for development and testing the primitives:
 
 ```bash
 # Test issue assessment
-npx agentic-triage assess 123
+triage assess 123
 
 # Test PR review
-npx agentic-triage review 144
-
-# Start MCP server
-npx agentic-triage mcp-server
+triage review 144
 ```
 
 ## Environment Variables
@@ -212,9 +171,6 @@ npx agentic-triage mcp-server
 ```bash
 # For GitHub provider
 GH_TOKEN=ghp_xxx              # GitHub PAT with repo scope
-
-# For Beads provider (optional)
-BEADS_ROOT=/path/to/project   # Beads project root
 
 # For AI operations (when using CLI)
 OLLAMA_API_KEY=xxx            # Ollama Cloud API key
@@ -239,11 +195,6 @@ pnpm run build
 # Lint
 pnpm run check
 ```
-
-## Related Projects
-
-- [Beads](https://github.com/steveyegge/beads) - Local-first, AI-native issue tracking
-- [Vercel AI SDK](https://sdk.vercel.ai) - AI SDK for TypeScript
 
 ## License
 

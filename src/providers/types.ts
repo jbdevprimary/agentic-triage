@@ -232,35 +232,6 @@ export interface TriageProvider {
     searchIssues(query: string, options?: ListIssuesOptions): Promise<TriageIssue[]>;
 
     // =========================================================================
-    // Dependencies (for providers that support them)
-    // =========================================================================
-
-    /**
-     * Add a dependency between issues
-     */
-    addDependency?(from: string, to: string, type: DependencyType): Promise<void>;
-
-    /**
-     * Remove a dependency
-     */
-    removeDependency?(from: string, to: string): Promise<void>;
-
-    /**
-     * Get dependencies for an issue
-     */
-    getDependencies?(id: string): Promise<IssueDependency[]>;
-
-    /**
-     * Get issues that block the given issue
-     */
-    getBlockers?(id: string): Promise<TriageIssue[]>;
-
-    /**
-     * Get issues blocked by the given issue
-     */
-    getBlocking?(id: string): Promise<TriageIssue[]>;
-
-    // =========================================================================
     // Labels
     // =========================================================================
 
@@ -287,10 +258,6 @@ export interface TriageProvider {
      * Get provider statistics
      */
     getStats(): Promise<ProviderStats>;
-
-    // =========================================================================
-    // Sync (for distributed providers like Beads)
-    // =========================================================================
 
     /**
      * Sync with remote (for providers that support it)
@@ -319,20 +286,16 @@ export interface BeadsProviderConfig {
     type: 'beads';
     /** Working directory (defaults to cwd) */
     workingDir?: string;
-    /** Path to bd executable */
-    bdPath?: string;
-    /** Use daemon RPC instead of CLI */
-    useDaemon?: boolean;
 }
 
 export interface JiraProviderConfig {
     type: 'jira';
-    /** Jira instance URL */
-    url: string;
+    /** Jira instance host (e.g., 'https://mycompany.atlassian.net') */
+    host: string;
     /** Project key */
-    project: string;
+    projectKey: string;
     /** API token */
-    token: string;
+    apiToken: string;
     /** User email for auth */
     email: string;
 }
@@ -348,20 +311,21 @@ export interface LinearProviderConfig {
 export type ProviderConfig = GitHubProviderConfig | BeadsProviderConfig | JiraProviderConfig | LinearProviderConfig;
 
 // =============================================================================
-// Utility Types
+// Utility Functions
 // =============================================================================
 
 /**
- * Map provider priority numbers to normalized priority
+ * Map provider priority values to normalized priority
  */
 export function normalizePriority(value: number | string): IssuePriority {
     if (typeof value === 'string') {
         const lower = value.toLowerCase();
-        if (lower === 'critical' || lower === 'p0') return 'critical';
+        if (lower === 'critical' || lower === 'highest' || lower === 'p0') return 'critical';
         if (lower === 'high' || lower === 'p1') return 'high';
-        if (lower === 'medium' || lower === 'p2') return 'medium';
+        if (lower === 'medium' || lower === 'medium' || lower === 'p2') return 'medium';
         if (lower === 'low' || lower === 'p3') return 'low';
-        return 'backlog';
+        if (lower === 'lowest' || lower === 'backlog' || lower === 'p4') return 'backlog';
+        return 'medium';
     }
     // Numeric: 0=critical, 1=high, 2=medium, 3=low, 4+=backlog
     if (value === 0) return 'critical';
@@ -372,7 +336,7 @@ export function normalizePriority(value: number | string): IssuePriority {
 }
 
 /**
- * Map normalized priority to numeric value
+ * Map normalized priority to numeric value (0 is highest)
  */
 export function priorityToNumber(priority: IssuePriority): number {
     switch (priority) {
@@ -390,7 +354,7 @@ export function priorityToNumber(priority: IssuePriority): number {
 }
 
 /**
- * Map provider status to normalized status
+ * Map provider status strings to normalized status
  */
 export function normalizeStatus(value: string): IssueStatus {
     const lower = value.toLowerCase().replace(/[_-]/g, '');
@@ -402,7 +366,7 @@ export function normalizeStatus(value: string): IssueStatus {
 }
 
 /**
- * Map provider type to normalized type
+ * Map provider type strings to normalized type
  */
 export function normalizeType(value: string): IssueType {
     const lower = value.toLowerCase();

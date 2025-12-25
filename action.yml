@@ -1,84 +1,19 @@
 name: 'Agentic Triage'
-description: 'AI-powered GitHub issue triage, PR review, and sprint planning'
+description: 'AI-powered GitHub issue triage and PR review primitives'
 author: 'Jon Bogaty'
 branding:
   icon: 'git-pull-request'
   color: 'purple'
 
 inputs:
-  command:
-    description: 'Triage command to run (assess, label, review, sprint, roadmap, security, cascade)'
+  issue_body:
+    description: 'The body of the issue to analyze'
     required: true
-  issue:
-    description: 'Issue number (for assess, label, plan commands)'
-    required: false
-  pr:
-    description: 'PR number (for review, verify commands)'
-    required: false
-  repo:
-    description: 'Target repository (owner/repo format)'
-    required: false
-    default: ${{ github.repository }}
-  github_token:
-    description: 'GitHub token for API access'
-    required: true
-  ollama_api_key:
-    description: 'Ollama Cloud API key'
-    required: true
-  ollama_host:
-    description: 'Ollama API host'
-    required: false
-    default: 'https://ollama.com'
-  ollama_model:
-    description: 'Ollama model to use'
-    required: false
-    default: 'llama3.1:70b'
-  version:
-    description: 'agentic-triage version to use'
-    required: false
-    default: 'latest'
 
 outputs:
   result:
-    description: 'Command execution result'
-    value: ${{ steps.run.outputs.result }}
-  summary:
-    description: 'AI-generated summary'
-    value: ${{ steps.run.outputs.summary }}
+    description: 'The result of the analysis'
 
 runs:
-  using: 'composite'
-  steps:
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: '22'
-
-    - name: Install agentic-triage
-      shell: bash
-      run: npm install -g agentic-triage@${{ inputs.version }}
-
-    - name: Run triage command
-      id: run
-      shell: bash
-      env:
-        GH_TOKEN: ${{ inputs.github_token }}
-        OLLAMA_API_KEY: ${{ inputs.ollama_api_key }}
-        OLLAMA_HOST: ${{ inputs.ollama_host }}
-        OLLAMA_MODEL: ${{ inputs.ollama_model }}
-      run: |
-        # Build command arguments
-        ARGS="${{ inputs.command }}"
-
-        if [ -n "${{ inputs.issue }}" ]; then
-          ARGS="$ARGS ${{ inputs.issue }}"
-        fi
-
-        if [ -n "${{ inputs.pr }}" ]; then
-          ARGS="$ARGS ${{ inputs.pr }}"
-        fi
-
-        ARGS="$ARGS --repo ${{ inputs.repo }}"
-
-        echo "Running: agentic-triage $ARGS"
-        agentic-triage $ARGS
+  using: 'node20'
+  main: 'dist/action.js'

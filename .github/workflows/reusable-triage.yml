@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run agentic-triage
-        uses: jbdevprimary/agentic-triage@main
+        uses: jbcom/nodejs-agentic-triage@c7cb1ef533972cd759f19af230f8b4250b8a19aa
         with:
           command: ${{ inputs.command }}
           issue: ${{ inputs.issue }}

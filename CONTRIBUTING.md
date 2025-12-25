@@ -413,33 +413,26 @@ agentic-triage/
 ├── .github/              # GitHub workflows and templates
 ├── .husky/               # Git hooks (pre-commit)
 ├── src/                  # Source code
-│   ├── ai.ts            # AI client (Ollama/Anthropic)
-│   ├── cli.ts           # CLI entry point
-│   ├── commands/        # Command implementations
-│   ├── execution/       # Plan execution engine
-│   │   ├── executor.ts  # Plan executor
-│   │   ├── planner.ts   # Plan generator
-│   │   ├── recorder.ts  # VCR HTTP recorder
-│   │   ├── sandbox.ts   # Sandbox execution
-│   │   ├── fixtures.ts  # Test fixtures
-│   │   └── mock-mcp.ts  # Mock MCP provider
-│   ├── reporters/       # Test result reporters
-│   ├── planning/        # Sprint planning
-│   └── index.ts         # Public API
-├── tests/               # Test files
-│   ├── cassettes/       # VCR recordings
-│   ├── execution/       # Execution tests
-│   └── integration/     # Integration tests
-├── dist/                # Build output (gitignored)
-├── coverage/            # Coverage reports (gitignored)
-├── biome.json           # Biome config
-├── tsconfig.json        # TypeScript config
-├── vitest.config.ts     # Vitest config
-├── package.json         # Dependencies and scripts
-├── pnpm-lock.yaml       # pnpm lockfile
-├── TESTING.md           # Testing guide
-├── CONTRIBUTING.md      # This file
-└── README.md            # Project README
+│   ├── index.ts          # Main entry point
+│   ├── action.ts         # GitHub Action entry point
+│   ├── github.ts         # GitHub API helpers
+│   ├── handlers/         # Triage handlers
+│   ├── schemas/          # Zod schemas for primitives
+│   ├── tools/            # Vercel AI SDK tool definitions
+│   ├── mcp.ts            # MCP server implementation
+│   ├── octokit.ts        # Octokit client and GraphQL
+│   └── playwright.ts     # Playwright integration
+├── tests/                # Test files
+├── dist/                 # Build output (gitignored)
+├── coverage/             # Coverage reports (gitignored)
+├── biome.json            # Biome config
+├── tsconfig.json         # TypeScript config
+├── vitest.config.ts      # Vitest config
+├── package.json          # Dependencies and scripts
+├── pnpm-lock.yaml        # pnpm lockfile
+├── TESTING.md            # Testing guide
+├── CONTRIBUTING.md       # This file
+└── README.md             # Project README
 ```
 
 ## Getting Help

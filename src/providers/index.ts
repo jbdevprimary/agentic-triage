@@ -1,5 +1,6 @@
 /**
  * Triage Providers
+<<<<<<< HEAD
  *
  * Multi-provider abstraction for issue tracking systems.
  * Similar to how AI providers work,
@@ -25,188 +26,60 @@
  * const issues = await github.listIssues({ status: 'open' });
  * const ready = await beads.getReadyWork({ limit: 10 });
  * ```
+=======
+>>>>>>> origin/main
  */
 
-export {
-    BeadsProvider,
-    createBeadsProvider,
-    isBeadsInitialized,
-    isBeadsInstalled,
-} from './beads.js';
-
-// Providers
-export { createGitHubProvider, GitHubProvider } from './github.js';
-// Types
+export { BeadsProvider } from './beads.js';
+export { GitHubProvider } from './github.js';
+export { JiraProvider } from './jira.js';
+export { type LinearConfig, LinearProvider } from './linear.js';
 export * from './types.js';
 
 import { BeadsProvider } from './beads.js';
 import { GitHubProvider } from './github.js';
-// Re-export for convenience
+import { JiraProvider } from './jira.js';
+import { type LinearConfig, LinearProvider } from './linear.js';
 import type { ProviderConfig, TriageProvider } from './types.js';
-
-// =============================================================================
-// Provider Registry
-// =============================================================================
-
-const providerRegistry = new Map<string, TriageProvider>();
 
 /**
  * Create a triage provider from configuration
- *
- * @example
- * ```typescript
- * // GitHub provider
- * const github = createProvider({
- *     type: 'github',
- *     repo: 'owner/repo',
- * });
- *
- * // Beads provider
- * const beads = createProvider({
- *     type: 'beads',
- *     workingDir: process.cwd(),
- * });
- * ```
  */
-export function createProvider(config: ProviderConfig): TriageProvider {
-    switch (config.type) {
+export function createProvider(config: ProviderConfig | any): TriageProvider {
+    const type = config.type || config.provider;
+    switch (type) {
         case 'github':
-            return new GitHubProvider(config);
-
-        case 'beads':
-            return new BeadsProvider(config);
+            return new GitHubProvider(config.github || config);
 
         case 'jira':
-            throw new Error(
-                'Jira provider not yet implemented. ' +
-                    'Contributions welcome! See src/providers/types.ts for interface.'
-            );
+            return new JiraProvider(config.jira || config);
 
         case 'linear':
-            throw new Error(
-                'Linear provider not yet implemented. ' +
-                    'Contributions welcome! See src/providers/types.ts for interface.'
-            );
+            return new LinearProvider(config.linear || config);
+
+        case 'beads':
+            return new BeadsProvider(config.beads || config);
 
         default:
-            throw new Error(`Unknown provider type: ${(config as { type: string }).type}`);
+            throw new Error(`Unknown provider type: ${type}`);
     }
 }
 
 /**
- * Register a provider instance for reuse
- *
- * @example
- * ```typescript
- * registerProvider('main', createProvider({ type: 'github', repo: 'owner/repo' }));
- * registerProvider('local', createProvider({ type: 'beads' }));
- *
- * const github = getProvider('main');
- * const beads = getProvider('local');
- * ```
+ * Detect and create the best provider based on environment
  */
-export function registerProvider(name: string, provider: TriageProvider): void {
-    providerRegistry.set(name, provider);
-}
-
-/**
- * Get a registered provider by name
- */
-export function getProvider(name: string): TriageProvider | undefined {
-    return providerRegistry.get(name);
-}
-
-/**
- * Get all registered providers
- */
-export function getAllProviders(): Map<string, TriageProvider> {
-    return new Map(providerRegistry);
-}
-
-/**
- * Clear all registered providers
- */
-export function clearProviders(): void {
-    providerRegistry.clear();
-}
-
-// =============================================================================
-// Auto-detection
-// =============================================================================
-
-/**
- * Detect available providers in the current environment
- *
- * @example
- * ```typescript
- * const available = await detectProviders();
- * // Returns: ['github', 'beads'] if both are available
- * ```
- */
-export async function detectProviders(workingDir: string = process.cwd()): Promise<string[]> {
-    const available: string[] = [];
-
-    // Check for GitHub
-    try {
-        const { execFileSync } = await import('node:child_process');
-        execFileSync('gh', ['auth', 'status'], { encoding: 'utf-8', stdio: 'pipe' });
-        available.push('github');
-    } catch {
-        // GitHub CLI not authenticated
+export async function createBestProvider(options: { repo?: string } = {}): Promise<TriageProvider> {
+    if (options.repo) {
+        return new GitHubProvider({ type: 'github', repo: options.repo });
     }
 
-    // Check for Beads
-    try {
-        const { isBeadsInstalled, isBeadsInitialized } = await import('./beads.js');
-        if (isBeadsInstalled()) {
-            if (isBeadsInitialized(workingDir)) {
-                available.push('beads');
-            } else {
-                available.push('beads (not initialized)');
-            }
-        }
-    } catch {
-        // Beads not installed
-    }
-
-    return available;
-}
-
-/**
- * Create the best available provider for the current context
- *
- * Priority:
- * 1. Beads (if initialized in current directory) - local-first, richest features
- * 2. GitHub (if repo context available)
- *
- * @example
- * ```typescript
- * const provider = await createBestProvider();
- * const ready = await provider.getReadyWork();
- * ```
- */
-export async function createBestProvider(
-    options: { workingDir?: string; repo?: string; preferBeads?: boolean } = {}
-): Promise<TriageProvider> {
-    const { workingDir = process.cwd(), repo, preferBeads = true } = options;
-
-    // Check Beads first if preferred
-    if (preferBeads) {
-        try {
-            const { isBeadsInstalled, isBeadsInitialized } = await import('./beads.js');
-            if (isBeadsInstalled() && isBeadsInitialized(workingDir)) {
-                return new BeadsProvider({ type: 'beads', workingDir });
-            }
-        } catch {
-            // Beads not available
-        }
-    }
-
-    // Fall back to GitHub
+    // Try to detect from environment or git
+    const repo = process.env.GITHUB_REPOSITORY;
     if (repo) {
         return new GitHubProvider({ type: 'github', repo });
     }
 
+<<<<<<< HEAD
     // Try to detect repo from git remote
     try {
         const { execFileSync } = await import('node:child_process');
@@ -307,4 +180,7 @@ export async function getCombinedStats(): Promise<{
     }
 
     return { providers, total };
+=======
+    throw new Error('Could not auto-detect provider. Please provide configuration.');
+>>>>>>> origin/main
 }

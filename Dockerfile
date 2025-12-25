@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 # agentic-triage Docker Image
 # AI-powered GitHub issue triage, PR review, and sprint planning CLI
 # Includes triage primitives for issue/PR management
+=======
+# @agentic/triage Docker Image
+# Portable triage primitives for AI agents
+# Vercel AI SDK-compatible tools for issue triage, PR review, and project management.
+>>>>>>> origin/main
 
 # =============================================================================
 # Stage 1: Build stage
@@ -62,17 +68,17 @@ RUN pnpm setup
 ENV PNPM_HOME="/home/triage/.local/share/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
-# Install agentic-triage globally from npm
-RUN pnpm add -g agentic-triage@latest
+# Install @agentic/triage globally from npm
+RUN pnpm add -g @agentic/triage@latest
 
 # Verify installation
-RUN agentic-triage --help
+RUN triage --help
 
 # Default working directory
 WORKDIR /workspace
 
 # Entry point
-ENTRYPOINT ["agentic-triage"]
+ENTRYPOINT ["triage"]
 CMD ["--help"]
 
 # =============================================================================

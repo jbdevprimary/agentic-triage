@@ -1,4 +1,6 @@
+import { generateObject, type LanguageModel } from 'ai';
 import type { ListIssuesOptions } from '../providers/types.js';
+import { issueAnalysisSchema } from '../schemas/index.js';
 import type { IssueTriage } from '../schemas/issue.js';
 import type { TriageConnectors } from '../triage/connectors.js';
 import { getConnectors } from './connectors.js';
@@ -60,4 +62,25 @@ export async function handleGetIssue(id: string, customConnectors?: TriageConnec
         console.error(`Failed to get issue ${id}:`, error);
         throw error;
     }
+}
+
+/**
+ * Analyze an issue using the provided language model.
+ *
+ * @param issueBody - The content of the issue to analyze
+ * @param model - The Vercel AI SDK model to use
+ * @returns The structured analysis result
+ */
+export async function analyzeIssue(issueBody: string, model: LanguageModel) {
+    if (!issueBody) {
+        throw new Error('Issue body is required');
+    }
+
+    const result = await generateObject({
+        model,
+        schema: issueAnalysisSchema,
+        prompt: `Analyze the following issue and provide a summary, impact, and suggestions:\n\n${issueBody}`,
+    });
+
+    return result.object;
 }

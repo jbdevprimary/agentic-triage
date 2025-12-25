@@ -26,7 +26,11 @@ jobs:
         with:
           node-version: '22'
 
+<<<<<<< HEAD
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.2.0
+=======
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.1.0
+>>>>>>> origin/main
         with:
           version: 9
 
@@ -38,7 +42,11 @@ jobs:
           STORE_PATH="${STORE_PATH:-${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store}"
           echo "store=$STORE_PATH" >> $GITHUB_OUTPUT
 
+<<<<<<< HEAD
       - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+=======
+      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.0
+>>>>>>> origin/main
         with:
           path: ${{ steps.pnpm-cache.outputs.store }}
           key: pnpm-store-${{ hashFiles('pnpm-lock.yaml', 'package.json') }}
@@ -74,7 +82,11 @@ jobs:
         with:
           node-version: '22'
 
+<<<<<<< HEAD
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.2.0
+=======
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.1.0
+>>>>>>> origin/main
         with:
           version: 9
 
@@ -119,7 +131,11 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
+<<<<<<< HEAD
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.2.0
+=======
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.1.0
+>>>>>>> origin/main
         with:
           version: 9
 
@@ -164,7 +180,11 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.check.outputs.should_release == 'true'
+<<<<<<< HEAD
         uses: softprops/action-gh-release@01570a1f39cb168c169c802c3bceb9e93fb10974 # v2.1.0
+=======
+        uses: softprops/action-gh-release@c85c599104002394fd3f3576406e9036952705e3 # v2.2.1
+>>>>>>> origin/main
         with:
           tag_name: v${{ steps.check.outputs.version }}
           name: v${{ steps.check.outputs.version }}

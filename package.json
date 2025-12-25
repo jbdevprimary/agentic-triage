@@ -6,7 +6,6 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "bin": {
-        "agentic-triage": "./dist/cli.js",
         "triage": "./dist/cli.js"
     },
     "exports": {
@@ -86,10 +85,12 @@
         "node": ">=20"
     },
     "dependencies": {
-        "@ai-sdk/mcp": "^1.0.0-beta.37",
+        "@actions/core": "^2.0.1",
+        "@ai-sdk/mcp": "^1.0.1",
+        "@linear/sdk": "^68.1.0",
         "@playwright/mcp": "latest",
-        "ai": "^6.0.3",
-        "ai-sdk-ollama": "^2.0.1",
+        "ai": "^6.0.0",
+        "ai-sdk-ollama": "^3.0.0",
         "commander": "^14.0.2",
         "glob": "^13.0.0",
         "octokit": "^5.0.5",
