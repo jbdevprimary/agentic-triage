@@ -128,7 +128,7 @@ export function getIssueTools(customConnectors?: TriageConnectors): ToolRecord {
                 const issue = await connectors.issues.create({
                     title,
                     description,
-                    type: type as any,
+                    type,
                     priority,
                     labels,
                     assignee,
@@ -163,7 +163,7 @@ export function getIssueTools(customConnectors?: TriageConnectors): ToolRecord {
                     description,
                     status,
                     priority,
-                    type: type as any,
+                    type,
                     assignee,
                 });
                 return {

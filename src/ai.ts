@@ -76,7 +76,8 @@ export async function resolveModel(config: AIConfig = {}): Promise<{
     }
 
     throw new Error(
-        `Provider ${providerName} is not supported directly. Please provide a pre-configured model instance.`
+        `Provider ${providerName} is not supported in this version. Only 'ollama' provider is currently supported. ` +
+            `For other providers, please use the direct AI SDK integration or configure via environment variables.`
     );
 }
 

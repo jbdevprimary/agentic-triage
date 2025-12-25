@@ -1,16 +1,7 @@
 import type { ListIssuesOptions } from '../providers/types.js';
 import type { IssueTriage } from '../schemas/issue.js';
-import { TriageConnectors } from '../triage/connectors.js';
-
-let _connectors: TriageConnectors | null = null;
-
-function getConnectors(customConnectors?: TriageConnectors) {
-    if (customConnectors) return customConnectors;
-    if (!_connectors) {
-        _connectors = new TriageConnectors();
-    }
-    return _connectors;
-}
+import type { TriageConnectors } from '../triage/connectors.js';
+import { getConnectors } from './connectors.js';
 
 /**
  * Handler for triaging an issue

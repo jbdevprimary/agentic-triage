@@ -8,7 +8,7 @@ export const listIssuesTool = tool({
     inputSchema: z.object({
         status: z.enum(['open', 'in_progress', 'blocked', 'closed']).optional(),
         priority: z.enum(['critical', 'high', 'medium', 'low', 'backlog']).optional(),
-        type: z.enum(['bug', 'feature', 'task', 'epic', 'chore']).optional(),
+        type: z.enum(['bug', 'feature', 'task', 'epic', 'chore', 'docs']).optional(),
         labels: z.array(z.string()).optional(),
         limit: z.number().optional(),
         assignee: z.string().optional(),
