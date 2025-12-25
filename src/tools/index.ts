@@ -1,3 +1,4 @@
+import type { Tool } from 'ai';
 import * as issueTools from './issue.js';
 import * as reviewTools from './review.js';
 import * as triageTools from './triage.js';
@@ -6,10 +7,13 @@ export * from './issue.js';
 export * from './review.js';
 export * from './triage.js';
 
+/** Tool map type for type safety */
+type ToolMap = Record<string, Tool>;
+
 /**
  * Get all triage tools (issues, reviews, and triage)
  */
-export function getTriageTools() {
+export function getTriageTools(): ToolMap {
     return {
         ...getIssueTools(),
         ...getReviewTools(),
@@ -20,7 +24,7 @@ export function getTriageTools() {
 /**
  * Get issue management tools
  */
-export function getIssueTools() {
+export function getIssueTools(): ToolMap {
     return {
         listIssues: issueTools.listIssuesTool,
         getIssue: issueTools.getIssueTool,
@@ -36,7 +40,7 @@ export function getIssueTools() {
 /**
  * Get pull request and code review tools
  */
-export function getReviewTools() {
+export function getReviewTools(): ToolMap {
     return {
         submitCodeReview: reviewTools.submitCodeReviewTool,
         getPRComments: reviewTools.getPRCommentsTool,
@@ -46,6 +50,6 @@ export function getReviewTools() {
 /**
  * Get project management tools (placeholder)
  */
-export function getProjectTools() {
+export function getProjectTools(): ToolMap {
     return {};
 }
