@@ -22,7 +22,7 @@ export interface TriageConnectorsConfig {
     /**
      * Provider type.
      */
-    provider?: 'github' | 'jira' | 'beads';
+    provider?: 'github' | 'jira' | 'beads' | 'linear';
 
     /**
      * GitHub specific configuration
@@ -30,6 +30,14 @@ export interface TriageConnectorsConfig {
     github?: {
         repo: string;
         token?: string;
+    };
+
+    /**
+     * Linear specific configuration
+     */
+    linear?: {
+        apiKey: string;
+        teamId: string;
     };
 
     /**
@@ -82,6 +90,11 @@ export class TriageConnectors {
                 type: 'github',
                 repo: this.config.github.repo,
                 token: this.config.github.token,
+            });
+        } else if (this.config.provider === 'linear' && this.config.linear) {
+            this._provider = createProvider({
+                type: 'linear',
+                ...this.config.linear,
             });
         } else {
             this._provider = await createBestProvider({

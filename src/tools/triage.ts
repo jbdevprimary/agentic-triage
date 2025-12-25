@@ -1,22 +1,22 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { getTriageConnectors } from '../providers/index.js';
 import { getPullRequest } from '../octokit.js';
+import { getTriageConnectors } from '../triage/index.js';
 
 export const triageTool = tool({
     description: 'Perform a triage analysis of an issue or pull request.',
-    parameters: z.object({
+    inputSchema: z.object({
         id: z.union([z.number(), z.string()]).describe('The ID of the issue or pull request to triage.'),
         type: z.enum(['issue', 'pull-request']).describe('The type of item to triage.'),
     }),
-    execute: async ({ id, type }) => {
+    execute: async ({ id, type }: { id: string | number; type: 'issue' | 'pull-request' }) => {
         if (type === 'issue') {
             const connectors = getTriageConnectors();
-            const issue = await connectors.getIssue(String(id));
+            const issue = await connectors.issues.get(String(id));
             return {
                 id: issue?.id,
                 title: issue?.title,
-                body: issue?.description || issue?.body,
+                description: issue?.description,
                 type: 'issue',
             };
         }
