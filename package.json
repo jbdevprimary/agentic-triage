@@ -84,9 +84,13 @@
     "bugs": {
         "url": "https://github.com/agentic-dev-library/triage/issues"
     },
-    "engines": {
-        "node": ">=20"
-    },
+	"engines": {
+		"node": ">=20"
+	},
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org/"
+	},
     "dependencies": {
         "@actions/core": "^2.0.1",
         "@ai-sdk/mcp": "^1.0.1",
