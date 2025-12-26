@@ -89,72 +89,36 @@ export class TaskRouter {
 
         const trail: RoutingResult['trail'] = [];
         let totalCost = 0;
-        let currentTier = complexity.tier;
-
-        // Get all tiers in order of escalation
-        const tierOrder: ComplexityTier[] = ['trivial', 'simple', 'moderate', 'complex', 'expert'];
-        const startIndex = tierOrder.indexOf(currentTier);
 
         // Try each tier from current to expert
-        for (let tierIndex = startIndex; tierIndex < tierOrder.length; tierIndex++) {
-            currentTier = tierOrder[tierIndex];
-            const agents = this.config.registry.forTier(currentTier);
+        const tierOrder: ComplexityTier[] = ['trivial', 'simple', 'moderate', 'complex', 'expert'];
+        const startIndex = tierOrder.indexOf(complexity.tier);
+
+        for (let i = startIndex; i < tierOrder.length; i++) {
+            const tier = tierOrder[i];
+            const agents = this.config.registry.forTier(tier);
 
             for (const agent of agents) {
-                // Check approval requirement
-                if (agent.requiresApproval && !this.hasApproval(fullTask, agent)) {
+                if (!this.canUseAgent(agent, fullTask)) {
                     continue;
                 }
 
-                // Check budget
-                if (this.config.dailyBudget > 0 && this.state.dailyCosts + agent.cost > this.config.dailyBudget) {
-                    continue;
+                const result = await this.tryAgent(agent, fullTask, trail);
+                totalCost += result.totalCost;
+
+                if (result.success && result.agentResult) {
+                    this.state.tasksProcessed++;
+                    return {
+                        success: true,
+                        agent: agent.id,
+                        result: result.agentResult,
+                        totalCost,
+                        attempts: trail.length,
+                        trail,
+                    };
                 }
 
-                // Try this agent with retries
-                for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
-                    this.config.onAgentSelected?.(agent, fullTask);
-
-                    try {
-                        const result = await agent.execute(fullTask);
-                        totalCost += result.cost;
-                        this.state.dailyCosts += result.cost;
-                        this.config.onCostIncurred?.(agent, result.cost, fullTask);
-
-                        trail.push({
-                            agent: agent.id,
-                            success: result.success,
-                            error: result.error,
-                        });
-
-                        if (result.success) {
-                            this.state.tasksProcessed++;
-                            return {
-                                success: true,
-                                agent: agent.id,
-                                result,
-                                totalCost,
-                                attempts: trail.length,
-                                trail,
-                            };
-                        }
-
-                        // If agent says don't retry, break to next agent
-                        if (!result.escalate && attempt < this.config.maxRetries) {
-                            continue; // Retry same agent
-                        }
-
-                        break; // Move to next agent
-                    } catch (error) {
-                        trail.push({
-                            agent: agent.id,
-                            success: false,
-                            error: error instanceof Error ? error.message : 'Unknown error',
-                        });
-                    }
-                }
-
-                // Escalate to next agent
+                // If agent failed but next agent in same tier exists, escalate
                 const nextAgent = agents[agents.indexOf(agent) + 1];
                 if (nextAgent) {
                     this.config.onEscalate?.(agent, nextAgent, 'Agent failed');
@@ -167,15 +131,73 @@ export class TaskRouter {
         return {
             success: false,
             agent: 'none',
-            result: {
-                success: false,
-                error: 'All agents exhausted',
-                cost: 0,
-            },
+            result: { success: false, error: 'All agents exhausted', cost: 0 },
             totalCost,
             attempts: trail.length,
             trail,
         };
+    }
+
+    /**
+     * Check if an agent can be used for a task
+     */
+    private canUseAgent(agent: AgentDefinition, task: AgentTask): boolean {
+        // Check approval requirement
+        if (agent.requiresApproval && !this.hasApproval(task, agent)) {
+            return false;
+        }
+
+        // Check budget
+        if (this.config.dailyBudget > 0 && this.state.dailyCosts + agent.cost > this.config.dailyBudget) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Try an agent with retries
+     */
+    private async tryAgent(
+        agent: AgentDefinition,
+        task: AgentTask,
+        trail: RoutingResult['trail']
+    ): Promise<{ success: boolean; totalCost: number; agentResult?: AgentResult }> {
+        let totalCost = 0;
+
+        for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
+            this.config.onAgentSelected?.(agent, task);
+
+            try {
+                const result = await agent.execute(task);
+                totalCost += result.cost;
+                this.state.dailyCosts += result.cost;
+                this.config.onCostIncurred?.(agent, result.cost, task);
+
+                trail.push({
+                    agent: agent.id,
+                    success: result.success,
+                    error: result.error,
+                });
+
+                if (result.success) {
+                    return { success: true, totalCost, agentResult: result };
+                }
+
+                // If agent says don't retry, break to next agent
+                if (result.escalate || attempt >= this.config.maxRetries) {
+                    return { success: false, totalCost, agentResult: result };
+                }
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                trail.push({ agent: agent.id, success: false, error: errorMessage });
+                if (attempt >= this.config.maxRetries) {
+                    return { success: false, totalCost };
+                }
+            }
+        }
+
+        return { success: false, totalCost };
     }
 
     /**

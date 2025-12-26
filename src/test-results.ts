@@ -183,60 +183,78 @@ export function formatForAI(report: TestReport): string {
 
     // Git context
     if (report.git) {
-        lines.push('## Git Context');
-        lines.push(`- Branch: ${report.git.branch}`);
-        lines.push(`- Commit: ${report.git.commit}`);
-        if (report.git.message) lines.push(`- Message: ${report.git.message}`);
-        lines.push('');
+        formatGitContext(lines, report.git);
     }
 
     // Failed tests
     const failed = getFailedTests(report);
     if (failed.length > 0) {
-        lines.push('## Failed Tests');
-        for (const test of failed) {
-            lines.push(`### ${test.fullName}`);
-            lines.push(`- File: ${test.file}${test.line ? `:${test.line}` : ''}`);
-            lines.push(`- Duration: ${test.duration}ms`);
-            if (test.error) {
-                lines.push('');
-                lines.push('**Error:**');
-                lines.push('```');
-                lines.push(test.error.message);
-                if (test.error.codeFrame) {
-                    lines.push('');
-                    lines.push(test.error.codeFrame);
-                }
-                lines.push('```');
-                if (test.error.diff) {
-                    lines.push('');
-                    lines.push('**Diff:**');
-                    lines.push('```diff');
-                    lines.push(test.error.diff);
-                    lines.push('```');
-                }
-            }
-            lines.push('');
-        }
+        formatFailedTests(lines, failed);
     }
 
     // Coverage
     if (report.coverage) {
-        lines.push('## Coverage');
-        lines.push(`- Lines: ${report.coverage.lines.percentage.toFixed(1)}%`);
-        lines.push(`- Functions: ${report.coverage.functions.percentage.toFixed(1)}%`);
-        lines.push(`- Branches: ${report.coverage.branches.percentage.toFixed(1)}%`);
-        lines.push('');
-
-        const lowCoverage = getLowCoverageFiles(report, 80);
-        if (lowCoverage.length > 0) {
-            lines.push('### Low Coverage Files (<80%)');
-            for (const file of lowCoverage.slice(0, 10)) {
-                lines.push(`- ${file.path}: ${file.lines.percentage.toFixed(1)}%`);
-            }
-            lines.push('');
-        }
+        formatCoverage(lines, report);
     }
 
     return lines.join('\n');
+}
+
+function formatGitContext(lines: string[], git: NonNullable<TestReport['git']>): void {
+    lines.push('## Git Context');
+    lines.push(`- Branch: ${git.branch}`);
+    lines.push(`- Commit: ${git.commit}`);
+    if (git.message) lines.push(`- Message: ${git.message}`);
+    lines.push('');
+}
+
+function formatFailedTests(lines: string[], failed: TestResult[]): void {
+    lines.push('## Failed Tests');
+    for (const test of failed) {
+        lines.push(`### ${test.fullName}`);
+        lines.push(`- File: ${test.file}${test.line ? `:${test.line}` : ''}`);
+        lines.push(`- Duration: ${test.duration}ms`);
+        if (test.error) {
+            formatTestError(lines, test.error);
+        }
+        lines.push('');
+    }
+}
+
+function formatTestError(lines: string[], error: TestError): void {
+    lines.push('');
+    lines.push('**Error:**');
+    lines.push('```');
+    lines.push(error.message);
+    if (error.codeFrame) {
+        lines.push('');
+        lines.push(error.codeFrame);
+    }
+    lines.push('```');
+    if (error.diff) {
+        lines.push('');
+        lines.push('**Diff:**');
+        lines.push('```diff');
+        lines.push(error.diff);
+        lines.push('```');
+    }
+}
+
+function formatCoverage(lines: string[], report: TestReport): void {
+    const coverage = report.coverage;
+    if (!coverage) return;
+    lines.push('## Coverage');
+    lines.push(`- Lines: ${coverage.lines.percentage.toFixed(1)}%`);
+    lines.push(`- Functions: ${coverage.functions.percentage.toFixed(1)}%`);
+    lines.push(`- Branches: ${coverage.branches.percentage.toFixed(1)}%`);
+    lines.push('');
+
+    const lowCoverage = getLowCoverageFiles(report, 80);
+    if (lowCoverage.length > 0) {
+        lines.push('### Low Coverage Files (<80%)');
+        for (const file of lowCoverage.slice(0, 10)) {
+            lines.push(`- ${file.path}: ${file.lines.percentage.toFixed(1)}%`);
+        }
+        lines.push('');
+    }
 }

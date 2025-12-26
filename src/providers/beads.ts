@@ -1,4 +1,5 @@
 import type {
+    BeadsProviderConfig,
     CreateIssueOptions,
     IssuePriority,
     ListIssuesOptions,
@@ -12,6 +13,8 @@ import type {
 export class BeadsProvider implements TriageProvider {
     readonly name = 'beads';
     readonly displayName = 'Beads';
+
+    constructor(public readonly config: BeadsProviderConfig = { type: 'beads' }) {}
 
     async isReady(): Promise<boolean> {
         return false;
