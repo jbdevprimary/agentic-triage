@@ -1,11 +1,12 @@
 // Complete triage primitives example
-import { TriageConnectors, getTriageTools } from '../src/index.js';
-import { generateText } from 'ai';
+
 import { anthropic } from '@ai-sdk/anthropic';
+import { generateText } from 'ai';
+import { getTriageTools, TriageConnectors } from '../src/index.js';
 
 /**
  * Complete example showcasing @agentic/triage primitives:
- * 
+ *
  * 1. Direct API usage (TriageConnectors)
  * 2. Vercel AI SDK Tools (getTriageTools)
  * 3. AI-powered triage agent
@@ -18,15 +19,15 @@ async function main() {
     // ===================================================================
     console.log('1. Using TriageConnectors (Direct API)...\n');
 
-    const triage = new TriageConnectors({ 
+    const triage = new TriageConnectors({
         provider: 'github',
-        github: { owner: 'myorg', repo: 'myrepo' }
+        github: { owner: 'myorg', repo: 'myrepo' },
     });
 
     // List issues
-    const issues = await triage.issues.list({ 
-        status: 'open', 
-        priority: 'high' 
+    const issues = await triage.issues.list({
+        status: 'open',
+        priority: 'high',
     });
     console.log(`Found ${issues.length} high-priority open issues`);
 
@@ -35,7 +36,7 @@ async function main() {
         title: 'Example issue',
         body: 'Testing triage primitives',
         type: 'task',
-        priority: 'medium'
+        priority: 'medium',
     });
     console.log(`Created issue: ${newIssue.id}\n`);
 
@@ -62,7 +63,7 @@ async function main() {
             1. List all open critical bugs
             2. Summarize their impact
             3. Recommend prioritization
-        `
+        `,
     });
 
     console.log('Agent response:');
