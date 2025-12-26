@@ -1,8 +1,8 @@
-# @agentic/triage 1.0.0 - COMPLETE RELEASE READY
+# @agentic-dev-library/triage 1.0.0 - COMPLETE RELEASE READY
 
 ## Executive Summary
 
-The **@agentic/triage** package is now COMPLETE and ready for stable 1.0.0 release with full triage primitives, comprehensive documentation, automated releases, and production-ready code.
+The **@agentic-dev-library/triage** package is now COMPLETE and ready for stable 1.0.0 release with full triage primitives, comprehensive documentation, automated releases, and production-ready code.
 
 ## 🎯 What's Included
 
@@ -35,7 +35,7 @@ The **@agentic/triage** package is now COMPLETE and ready for stable 1.0.0 relea
 
 ## 📦 Package Details
 
-**Package Name**: `@agentic/triage`  
+**Package Name**: `@agentic-dev-library/triage`  
 **Current Version**: 0.3.0  
 **Release Version**: 1.0.0  
 **License**: MIT  
@@ -190,10 +190,10 @@ Docs deployed → Docker image pushed
 ### NPM Publication
 ```bash
 # Verify package
-npm view @agentic/triage version
+npm view @agentic-dev-library/triage version
 # Should return: 1.0.0
 
-npm view @agentic/triage
+npm view @agentic-dev-library/triage
 # Verify metadata, keywords, license
 ```
 
@@ -236,7 +236,7 @@ feat!: complete triage primitives for 1.0.0 stable release
 
 BREAKING CHANGE: Documentation migrated from Sphinx to TypeDoc
 
-This commit finalizes @agentic/triage for v1.0.0 stable release
+This commit finalizes @agentic-dev-library/triage for v1.0.0 stable release
 with complete triage primitives, comprehensive documentation,
 automated releases, and production-ready code.
 

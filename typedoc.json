@@ -1,6 +1,6 @@
 {
     "$schema": "https://typedoc.org/schema.json",
-    "name": "@agentic/triage",
+    "name": "@agentic-dev-library/triage",
     "entryPoints": ["./src/index.ts", "./src/schemas/index.ts", "./src/tools/index.ts", "./src/handlers/index.ts"],
     "entryPointStrategy": "expand",
     "tsconfig": "./tsconfig.json",

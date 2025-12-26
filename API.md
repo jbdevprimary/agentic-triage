@@ -1,4 +1,4 @@
-# @agentic/triage API Reference
+# @agentic-dev-library/triage API Reference
 
 Complete API reference for the triage primitives.
 
@@ -9,7 +9,7 @@ Complete API reference for the triage primitives.
 Direct API for issue management across providers.
 
 ```typescript
-import { TriageConnectors } from '@agentic/triage';
+import { TriageConnectors } from '@agentic-dev-library/triage';
 
 const triage = new TriageConnectors({
   provider: 'github',
@@ -101,7 +101,7 @@ Get all triage tools for use with Vercel AI SDK.
 ```typescript
 import { generateText } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
-import { getTriageTools } from '@agentic/triage';
+import { getTriageTools } from '@agentic-dev-library/triage';
 
 const result = await generateText({
   model: anthropic('claude-sonnet-4-20250514'),
@@ -115,7 +115,7 @@ const result = await generateText({
 Get only issue management tools.
 
 ```typescript
-import { getIssueTools } from '@agentic/triage';
+import { getIssueTools } from '@agentic-dev-library/triage';
 
 const tools = getIssueTools();
 // Returns: listIssuesTool, getIssueTool, createIssueTool, etc.
@@ -126,7 +126,7 @@ const tools = getIssueTools();
 Get only project management tools.
 
 ```typescript
-import { getProjectTools } from '@agentic/triage';
+import { getProjectTools } from '@agentic-dev-library/triage';
 
 const tools = getProjectTools();
 // Returns: listSprintsTool, getCurrentSprintTool, etc.
@@ -137,7 +137,7 @@ const tools = getProjectTools();
 Get only code review tools.
 
 ```typescript
-import { getReviewTools } from '@agentic/triage';
+import { getReviewTools } from '@agentic-dev-library/triage';
 
 const tools = getReviewTools();
 // Returns: getPRCommentsTool
@@ -155,7 +155,7 @@ import {
   searchIssuesTool,
   addLabelsTool,
   removeLabelsTool
-} from '@agentic/triage';
+} from '@agentic-dev-library/triage';
 
 // Use individual tools as needed
 const minimalTools = {
@@ -210,7 +210,7 @@ const linear = new TriageConnectors({
 Zod schemas for type-safe validation.
 
 ```typescript
-import { schemas } from '@agentic/triage';
+import { schemas } from '@agentic-dev-library/triage';
 
 // Issue schemas
 schemas.issueSchema
@@ -231,7 +231,7 @@ schemas.triageResultSchema
 Pre-built handlers for common workflows.
 
 ```typescript
-import { handlers } from '@agentic/triage';
+import { handlers } from '@agentic-dev-library/triage';
 
 // Analyze issue
 const analysis = await handlers.analyzeIssue(issueBody, model);
@@ -248,7 +248,7 @@ const result = await handlers.triageIssue(issueData, model);
 ### Test Results Parsing
 
 ```typescript
-import { parseTestReport, getFailedTests, getLowCoverageFiles } from '@agentic/triage';
+import { parseTestReport, getFailedTests, getLowCoverageFiles } from '@agentic-dev-library/triage';
 
 // Parse test results
 const report = await parseTestReport('coverage/lcov.info');
@@ -264,10 +264,10 @@ const lowCoverage = getLowCoverageFiles(report, 80); // threshold
 
 ```typescript
 // Vitest reporter
-import { ViTestReporter } from '@agentic/triage/reporters/vitest';
+import { ViTestReporter } from '@agentic-dev-library/triage/reporters/vitest';
 
 // Playwright reporter
-import { PlaywrightReporter } from '@agentic/triage/reporters/playwright';
+import { PlaywrightReporter } from '@agentic-dev-library/triage/reporters/playwright';
 ```
 
 ## GitHub Integration
@@ -282,7 +282,7 @@ import {
   submitPRReview,
   getCheckRuns,
   getCodeScanningAlerts
-} from '@agentic/triage';
+} from '@agentic-dev-library/triage';
 
 // Get issue
 const issue = await getIssue(123);
@@ -305,7 +305,7 @@ await submitPRReview(456, {
 Complexity evaluation and task routing.
 
 ```typescript
-import { evaluateComplexity, TaskRouter, AgentRegistry } from '@agentic/triage';
+import { evaluateComplexity, TaskRouter, AgentRegistry } from '@agentic-dev-library/triage';
 
 // Evaluate complexity
 const score = await evaluateComplexity(evaluator, task, diff);
@@ -325,7 +325,7 @@ const result = await router.route(task, score);
 Priority queue with locking.
 
 ```typescript
-import { QueueManager, MemoryStorage } from '@agentic/triage';
+import { QueueManager, MemoryStorage } from '@agentic-dev-library/triage';
 
 const queue = new QueueManager(new MemoryStorage());
 
@@ -356,7 +356,7 @@ import {
   createFilesystemClient,
   getGitHubTools,
   getFilesystemTools
-} from '@agentic/triage';
+} from '@agentic-dev-library/triage';
 
 // Create clients
 const github = await createGitHubClient();
@@ -400,12 +400,12 @@ import type {
   ComplexityScore,
   AgentTask,
   QueueItem
-} from '@agentic/triage';
+} from '@agentic-dev-library/triage';
 ```
 
 ## Resources
 
 - [GitHub Repository](https://github.com/agentic-dev-library/triage)
-- [NPM Package](https://www.npmjs.com/package/@agentic/triage)
+- [NPM Package](https://www.npmjs.com/package/@agentic-dev-library/triage)
 - [Documentation](https://agentic-dev-library.github.io/triage/)
 - [Examples](https://github.com/agentic-dev-library/triage/tree/main/examples)

@@ -1,10 +1,10 @@
-# Migration Guide: agentic-triage to @agentic/triage
+# Migration Guide: agentic-triage to @agentic-dev-library/triage
 
-This guide helps you migrate from the legacy `agentic-triage` CLI application to the new `@agentic/triage` primitives library.
+This guide helps you migrate from the legacy `agentic-triage` CLI application to the new `@agentic-dev-library/triage` primitives library.
 
 ## Key Changes
 
-1. **Package Name**: Renamed from `agentic-triage` to `@agentic/triage`.
+1. **Package Name**: Renamed from `agentic-triage` to `@agentic-dev-library/triage`.
 2. **Architecture**: Moved from a CLI-first application to a library of Vercel AI SDK primitives (tools, schemas, handlers).
 3. **Dependencies**: Removed `agentic-control` dependency. Now standalone.
 
@@ -15,7 +15,7 @@ This guide helps you migrate from the legacy `agentic-triage` CLI application to
 npm install agentic-triage
 
 # After
-npm install @agentic/triage
+npm install @agentic-dev-library/triage
 ```
 
 ## Programmatic Usage
@@ -25,7 +25,7 @@ npm install @agentic/triage
 Tools are now Vercel AI SDK compatible.
 
 ```typescript
-import { getTriageTools } from '@agentic/triage';
+import { getTriageTools } from '@agentic-dev-library/triage';
 import { generateText } from 'ai';
 
 const result = await generateText({
@@ -40,19 +40,19 @@ const result = await generateText({
 Handlers provide high-level entry points for common tasks.
 
 ```typescript
-import { analyzeIssue } from '@agentic/triage';
+import { analyzeIssue } from '@agentic-dev-library/triage';
 
 const result = await analyzeIssue(issueBody, myModel);
 ```
 
 ## CLI Usage
 
-The CLI is still available via `npx @agentic/triage`, but it's now a thin wrapper around the primitives.
+The CLI is still available via `npx @agentic-dev-library/triage`, but it's now a thin wrapper around the primitives.
 
 ```bash
 # Before
 agentic-triage assess 123
 
 # After
-npx @agentic/triage assess 123
+npx @agentic-dev-library/triage assess 123
 ```

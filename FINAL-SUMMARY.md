@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-The @agentic/triage repository has been comprehensively triaged and prepared for stable v1.0.0 release. All critical issues resolved, all workflows fixed, complete documentation with jbcom branding, and clear release strategy established.
+The @agentic-dev-library/triage repository has been comprehensively triaged and prepared for stable v1.0.0 release. All critical issues resolved, all workflows fixed, complete documentation with jbcom branding, and clear release strategy established.
 
 ## ✅ Completed Tasks
 
@@ -139,7 +139,7 @@ Once merged to main, the CI workflow will automatically:
 2. ✅ Detect semantic version → 1.0.0
 3. ✅ Update package.json version
 4. ✅ Create git tag v1.0.0
-5. ✅ Publish to NPM as @agentic/triage@1.0.0
+5. ✅ Publish to NPM as @agentic-dev-library/triage@1.0.0
 6. ✅ Create GitHub release with changelog
 7. ✅ Build and push Docker image (ghcr.io/agentic-dev-library/triage:1.0.0)
 8. ✅ Deploy docs to GitHub Pages
@@ -171,7 +171,7 @@ Once merged to main, the CI workflow will automatically:
 - [ ] PR #54 closed with comment
 
 ### Deployment Verification
-- [ ] NPM: `npm view @agentic/triage version` returns 1.0.0
+- [ ] NPM: `npm view @agentic-dev-library/triage version` returns 1.0.0
 - [ ] GitHub: `gh release view v1.0.0` shows release
 - [ ] Docker: `docker pull ghcr.io/agentic-dev-library/triage:1.0.0` succeeds
 - [ ] Docs: https://agentic-dev-library.github.io/triage/ displays with jbcom branding

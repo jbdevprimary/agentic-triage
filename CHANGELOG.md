@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2024-12-XX
 
 ### Added
-- Refactor to @agentic/triage primitives
+- Refactor to @agentic-dev-library/triage primitives
 - Settings app configuration
 - Ecosystem-specific settings with ESLint
 - Standard Dependabot configuration with grouped updates

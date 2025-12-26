@@ -1,10 +1,10 @@
 # Agent Integration Guide
 
-This document describes how to integrate @agentic/triage tools into your AI agent system.
+This document describes how to integrate @agentic-dev-library/triage tools into your AI agent system.
 
 ## Overview
 
-@agentic/triage provides **portable triage primitives** for AI agents. These are Vercel AI SDK-compatible tools that can be used with any model provider (Anthropic, OpenAI, Ollama, etc.).
+@agentic-dev-library/triage provides **portable triage primitives** for AI agents. These are Vercel AI SDK-compatible tools that can be used with any model provider (Anthropic, OpenAI, Ollama, etc.).
 
 ## Tool Categories
 
@@ -41,7 +41,7 @@ This document describes how to integrate @agentic/triage tools into your AI agen
 ### Basic Agent Setup
 
 ```typescript
-import { getTriageTools } from '@agentic/triage';
+import { getTriageTools } from '@agentic-dev-library/triage';
 import { generateText } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 
@@ -67,7 +67,7 @@ import {
   listIssuesTool, 
   createIssueTool,
   searchIssuesTool 
-} from '@agentic/triage';
+} from '@agentic-dev-library/triage';
 
 // Only give agent the tools it needs
 const minimalTools = {
@@ -80,8 +80,8 @@ const minimalTools = {
 ### Custom Provider Configuration
 
 ```typescript
-import { setTriageConnectors, TriageConnectors } from '@agentic/triage';
-import { getTriageTools } from '@agentic/triage';
+import { setTriageConnectors, TriageConnectors } from '@agentic-dev-library/triage';
+import { getTriageTools } from '@agentic-dev-library/triage';
 
 // Configure before using tools
 const connectors = new TriageConnectors({
@@ -188,7 +188,7 @@ import {
   evaluateComplexity, 
   AgentRegistry, 
   TaskRouter 
-} from '@agentic/triage';
+} from '@agentic-dev-library/triage';
 
 // Provide your own LLM evaluator
 const evaluate = async (prompt: string) => {

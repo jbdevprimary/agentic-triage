@@ -133,7 +133,7 @@ Breaking changes:
 gh run watch
 
 # Verify NPM
-npm view @agentic/triage version  # Should show 1.0.0
+npm view @agentic-dev-library/triage version  # Should show 1.0.0
 
 # Verify GitHub
 gh release view v1.0.0
