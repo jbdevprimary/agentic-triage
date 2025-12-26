@@ -1,5 +1,5 @@
 /**
- * @agentic/triage - Queue Module
+ * @agentic-dev-library/triage - Queue Module
  *
  * Provider-agnostic queue management primitives.
  *

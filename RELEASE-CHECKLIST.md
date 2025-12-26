@@ -142,7 +142,7 @@
 - [x] CHANGELOG prepared for 1.0.0
 
 ### Deployment Targets
-- [x] **NPM**: @agentic/triage
+- [x] **NPM**: @agentic-dev-library/triage
 - [x] **GitHub**: agentic-dev-library/triage
 - [x] **Docker**: ghcr.io/agentic-dev-library/triage
 - [x] **Docs**: https://agentic-dev-library.github.io/triage/
@@ -160,7 +160,7 @@
 
 ## 📊 Package Stats
 
-- **Name**: @agentic/triage
+- **Name**: @agentic-dev-library/triage
 - **Version**: 0.3.0 → 1.0.0
 - **Size**: ~50KB (before compression)
 - **Files**: 316KB in dist/

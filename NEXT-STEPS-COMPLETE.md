@@ -49,7 +49,7 @@
 4. ✅ CHANGELOG.md updated
 5. ✅ Git tag v1.0.0 created
 6. ✅ Commit pushed to main
-7. ✅ NPM package published (@agentic/triage@1.0.0)
+7. ✅ NPM package published (@agentic-dev-library/triage@1.0.0)
 8. ✅ GitHub release created
 9. ✅ Docker image built and pushed (ghcr.io/agentic-dev-library/triage:1.0.0)
 10. ✅ Documentation deployed to GitHub Pages
@@ -65,7 +65,7 @@ Check these after PR #55 merges:
 
 ```bash
 # NPM Package
-npm view @agentic/triage version
+npm view @agentic-dev-library/triage version
 # Should return: 1.0.0
 
 # GitHub Release

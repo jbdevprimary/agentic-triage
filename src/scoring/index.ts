@@ -1,5 +1,5 @@
 /**
- * @agentic/triage - Scoring Module
+ * @agentic-dev-library/triage - Scoring Module
  *
  * Sigma-weighted complexity evaluation for intelligent task routing.
  *

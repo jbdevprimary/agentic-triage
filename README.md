@@ -18,14 +18,14 @@
 
 ## 🚨 Migration from agentic-triage
 
-This package was previously published as `agentic-triage` or `@agentic/triage`. Starting with v0.3.0, it has been consolidated as `@agentic-dev-library/triage`.
+This package was previously published as `agentic-triage` or under other names. Starting with v0.3.0, it has been consolidated as `@agentic-dev-library/triage` under the [agentic-dev-library](https://www.npmjs.com/org/agentic-dev-library) NPM organization.
 
-To migrate:
+To migrate from older versions:
 1. Update your `package.json` to use `@agentic-dev-library/triage`.
 2. Update your imports:
    ```typescript
-   // Old
-   import { getTriageTools } from '@agentic/triage';
+   // Old (if using previous package names)
+   import { getTriageTools } from 'agentic-triage';
    // New
    import { getTriageTools } from '@agentic-dev-library/triage';
    ```
@@ -143,7 +143,7 @@ The provider is auto-detected based on environment:
 ### Explicit Configuration
 
 ```typescript
-import { TriageConnectors } from '@agentic/triage';
+import { TriageConnectors } from '@agentic-dev-library/triage';
 
 // GitHub
 const github = new TriageConnectors({
