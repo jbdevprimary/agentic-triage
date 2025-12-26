@@ -23,7 +23,7 @@ describe('FileStorage', () => {
         it('should return empty state when file does not exist', async () => {
             const state = await storage.read();
             expect(state.items).toEqual([]);
-            expect(state.version).toBe(1);
+            expect(state.version).toBe(2);
         });
 
         it('should write and read state', async () => {

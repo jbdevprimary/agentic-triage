@@ -73,6 +73,7 @@ export class GitHubIssueStorage<T extends QueueItem = QueueItem> implements Queu
     private token: string;
     private octokit: GitHubIssueStorageOctokit | null;
     private actualIssueNumber: number | null = null;
+    private octokitPromise: Promise<GitHubIssueStorageOctokit> | null = null;
 
     constructor(options: GitHubIssueStorageOptions) {
         const [owner, repo] = options.repo.split('/');
@@ -228,10 +229,16 @@ export class GitHubIssueStorage<T extends QueueItem = QueueItem> implements Queu
             return this.octokit;
         }
 
-        // Dynamically import Octokit
-        const { Octokit } = await import('octokit');
-        this.octokit = new Octokit({ auth: this.token }) as unknown as GitHubIssueStorageOctokit;
-        return this.octokit;
+        // Cache the import promise to avoid multiple imports
+        if (!this.octokitPromise) {
+            this.octokitPromise = import('octokit').then(({ Octokit }) => {
+                const client = new Octokit({ auth: this.token }) as unknown as GitHubIssueStorageOctokit;
+                this.octokit = client;
+                return client;
+            });
+        }
+
+        return this.octokitPromise;
     }
 
     private async getOrCreateIssue(): Promise<{ number: number; body: string | null }> {

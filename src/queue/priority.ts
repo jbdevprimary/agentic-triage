@@ -15,6 +15,12 @@ export interface PRMetadata {
     reviewCount?: number;
 }
 
+/** Threshold for age-based priority boost (days) */
+const AGE_BOOST_THRESHOLD_DAYS = 7;
+
+/** Threshold for review count boost */
+const REVIEW_COUNT_BOOST_THRESHOLD = 2;
+
 /**
  * Priority scorer for queue items
  */
@@ -49,12 +55,12 @@ export class PriorityScorer {
         }
 
         // Age-based boost (old PRs get higher priority)
-        if (pr.age !== undefined && pr.age > 7) {
+        if (pr.age !== undefined && pr.age > AGE_BOOST_THRESHOLD_DAYS) {
             score = Math.max(1, score - 1) as Priority;
         }
 
         // Review count boost
-        if (pr.reviewCount !== undefined && pr.reviewCount > 2) {
+        if (pr.reviewCount !== undefined && pr.reviewCount > REVIEW_COUNT_BOOST_THRESHOLD) {
             score = Math.max(1, score - 1) as Priority;
         }
 

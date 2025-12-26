@@ -13,7 +13,7 @@ describe('MemoryStorage', () => {
         it('should start with empty state', async () => {
             const state = await storage.read();
             expect(state.items).toEqual([]);
-            expect(state.version).toBe(1);
+            expect(state.version).toBe(2);
             expect(state.lock).toBeNull();
         });
 

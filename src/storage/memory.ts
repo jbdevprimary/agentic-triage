@@ -16,7 +16,7 @@ export class MemoryStorage<T extends QueueItem = QueueItem> implements QueueStor
 
     constructor(initial?: Partial<QueueState<T>>) {
         this.state = {
-            version: 1,
+            version: 2,
             updatedAt: new Date().toISOString(),
             lock: null,
             items: [],

@@ -83,7 +83,7 @@ export class FileStorage<T extends QueueItem = QueueItem> implements QueueStorag
 
     private createEmptyState(): QueueState<T> {
         return {
-            version: 1,
+            version: 2,
             updatedAt: new Date().toISOString(),
             lock: null,
             items: [],
