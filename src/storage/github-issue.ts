@@ -309,22 +309,7 @@ export class GitHubIssueStorage<T extends QueueItem = QueueItem> implements Queu
         const json = JSON.stringify(state, null, 2);
 
         // Build status table
-        const rows = state.items.map((item, idx) => {
-            const prLink = item.id.includes('#') ? `[${item.id}](https://github.com/${item.id.replace('#', '/pull/')})` : item.id;
-            const priorityEmoji = item.priority === 1 ? '🔴' : item.priority === 2 ? '🟡' : '🟢';
-            const statusEmoji =
-                item.status === 'pending'
-                    ? '⏳'
-                    : item.status === 'processing'
-                      ? '🔄'
-                      : item.status === 'completed'
-                        ? '✅'
-                        : item.status === 'failed'
-                          ? '❌'
-                          : '⏸️';
-
-            return `| ${idx + 1} | ${prLink} | ${priorityEmoji} ${item.priority} | ${statusEmoji} ${item.status} |`;
-        });
+        const rows = state.items.map((item, idx) => this.formatTableRow(item, idx));
 
         const table =
             rows.length > 0
@@ -351,6 +336,37 @@ ${table}
 
 _Last updated: ${state.updatedAt}_
 `;
+    }
+
+    private formatTableRow(item: T, idx: number): string {
+        const prLink = item.id.includes('#')
+            ? `[${item.id}](https://github.com/${item.id.replace('#', '/pull/')})`
+            : item.id;
+        const priorityEmoji = this.getPriorityEmoji(item.priority);
+        const statusEmoji = this.getStatusEmoji(item.status);
+
+        return `| ${idx + 1} | ${prLink} | ${priorityEmoji} ${item.priority} | ${statusEmoji} ${item.status} |`;
+    }
+
+    private getPriorityEmoji(priority: number): string {
+        if (priority === 1) return '🔴';
+        if (priority === 2) return '🟡';
+        return '🟢';
+    }
+
+    private getStatusEmoji(status: string): string {
+        switch (status) {
+            case 'pending':
+                return '⏳';
+            case 'processing':
+                return '🔄';
+            case 'completed':
+                return '✅';
+            case 'failed':
+                return '❌';
+            default:
+                return '⏸️';
+        }
     }
 
     private parseLockComment(body: string): QueueLock | null {
