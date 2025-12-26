@@ -18,7 +18,7 @@
 
 ## 🚨 Migration from agentic-triage
 
-This package was previously published as `agentic-triage` or under other names. Starting with v0.3.0, it has been consolidated as `@agentic-dev-library/triage` under the [agentic-dev-library](https://www.npmjs.com/org/agentic-dev-library) NPM organization.
+This package was previously published as `agentic-triage` and `@agentic/triage`. Starting with v0.3.0, it has been consolidated as `@agentic-dev-library/triage` under the [agentic-dev-library](https://www.npmjs.com/org/agentic-dev-library) NPM organization.
 
 To migrate from older versions:
 1. Update your `package.json` to use `@agentic-dev-library/triage`.
