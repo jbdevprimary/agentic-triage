@@ -206,3 +206,9 @@ export * from './mcp-server.js';
 export * from './queue/index.js';
 export * from './scoring/index.js';
 export * from './storage/index.js';
+
+// ============================================================================
+// Escalation Ladder
+// ============================================================================
+
+export * from './escalation/index.js';
