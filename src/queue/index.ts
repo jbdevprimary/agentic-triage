@@ -5,10 +5,14 @@
  *
  * Key exports:
  * - Types: QueueItem, QueueState, etc.
- * - Storage: QueueStorage interface + MemoryStorage
+ * - Storage: QueueStorage interface + implementations
  * - Manager: QueueManager with locking and state management
+ * - Priority: Priority scoring utilities
+ * - Lock: Lock management utilities
  */
 
+export * from './lock.js';
 export * from './manager.js';
+export * from './priority.js';
 export * from './storage.js';
 export * from './types.js';
